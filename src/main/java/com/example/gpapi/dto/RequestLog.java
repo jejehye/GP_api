@@ -1,5 +1,7 @@
 package com.example.gpapi.dto;
 
+import com.example.gpapi.util.MaskingUtils;
+
 import java.time.LocalDateTime;
 
 /**
@@ -13,6 +15,10 @@ public record RequestLog(
         boolean success,
         String message
 ) {
+    public String maskedAccount() {
+        return MaskingUtils.maskAccount(account);
+    }
+
     public String maskedPw() {
         if (pwLength <= 0) return "(빈값)";
         return "*".repeat(pwLength) + " (" + pwLength + "자리)";

@@ -2,6 +2,7 @@ package com.example.gpapi.service;
 
 import com.example.gpapi.dto.StepResult;
 import com.example.gpapi.event.LogEventBus;
+import com.example.gpapi.util.MaskingUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jna.Memory;
@@ -88,7 +89,9 @@ public class GmshAccountService {
         }
 
         sendCopyData(hwnd, json, step);
-        eventBus.publishStep(StepResult.success(step + " 성공", "계좌=" + accountNo));
+        eventBus.publishStep(StepResult.success(
+                step + " 성공",
+                "계좌=" + MaskingUtils.maskAccount(accountNo)));
     }
 
     private void sendCopyData(HWND targetHwnd, String json, String step) {

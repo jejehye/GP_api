@@ -355,7 +355,7 @@ public class MainFrame {
             requestTableModel.setRowCount(0);
             requestTableModel.addRow(new Object[]{
                     log.timestamp().format(timeFmt),
-                    log.account(),
+                    log.maskedAccount(),
                     log.maskedPw(),
                     log.success() ? "성공" : "실패"
             });

@@ -2,6 +2,7 @@ package com.example.gpapi.service;
 
 import com.example.gpapi.dto.StepResult;
 import com.example.gpapi.event.LogEventBus;
+import com.example.gpapi.util.MaskingUtils;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
@@ -385,9 +386,9 @@ public class GpAgentService {
         if (anySuccess) {
             eventBus.publishStep(StepResult.success(
                     "계좌 송신 성공",
-                    "계좌=" + account + ", 비밀번호=" + mask(password)));
+                    "계좌=" + MaskingUtils.maskAccount(account) + ", 비밀번호=" + mask(password)));
         } else {
-            String msg = "계좌=" + account + ", 비밀번호=" + mask(password)
+            String msg = "계좌=" + MaskingUtils.maskAccount(account) + ", 비밀번호=" + mask(password)
                     + (lastErr != null ? " | " + lastErr : "");
             eventBus.publishStep(StepResult.fail("계좌 송신 실패", msg));
             throw new RuntimeException("계좌 송신 실패: " + (lastErr == null ? "unknown" : lastErr));

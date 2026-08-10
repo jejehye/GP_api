@@ -64,7 +64,7 @@ public class LogEventBus {
         System.out.printf("[%s] REQUEST | %s | account=%s | pw=%s%n",
                 log.timestamp().format(TIME),
                 log.success() ? "성공" : "실패",
-                log.account(),
+                log.maskedAccount(),
                 log.maskedPw());
         requestListeners.forEach(l -> l.accept(log));
     }
