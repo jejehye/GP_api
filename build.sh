@@ -1,6 +1,6 @@
 #!/bin/bash
 # Linux/Mac 빌드 스크립트
-# 실행 전 PC에 JDK 17이 설치되어 있어야 합니다.
+# 실행 전 PC에 JDK 25가 설치되어 있어야 합니다.
 # 참고: launch4j는 .exe를 만들지만, Linux/Mac에서도 EXE 생성은 가능합니다.
 
 set -e

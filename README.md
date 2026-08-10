@@ -7,14 +7,14 @@ Spring Boot, Swing, JNA를 사용하며 Windows 프로그램과는 `WM_COPYDATA`
 
 - `POST /send/v1/account` 계좌정보 전송 API
 - GP 또는 Mock GP 자동 검색 및 HWND 등록
-- GMSH `SETACCTINFO` 동시 전송
+- GMSH `SETACCTINFO`, `CLEARACCTINFO`, `OPENSCREEN` command 지원
 - GMSH 전송 전 계좌 비밀번호 암호화
 - 요청 내용과 단계별 전송 결과를 보여주는 Swing GUI
 - Windows 실행 파일 및 JRE 포함 portable ZIP 빌드
 
 ## 요구 환경
 
-- 빌드: JDK 17 이상
+- 빌드 및 실행: JDK 25
 - 실행: Windows 64-bit 권장
 - 로컬 API 주소: `http://127.0.0.1:8080`
 
@@ -24,7 +24,7 @@ API 서버는 보안을 위해 `127.0.0.1`에만 바인딩됩니다. 같은 PC�
 
 ### macOS 로컬 개발
 
-JDK 17이 설치되어 있으면 프로젝트 전용 Maven 3.9.11과 독립 의존성 캐시를 사용합니다.
+JDK 25가 설치되어 있으면 프로젝트 전용 Maven 3.9.11과 독립 의존성 캐시를 사용합니다.
 
 ```bash
 ./setup-local.sh
@@ -42,7 +42,7 @@ macOS 빌드의 주 산출물은 `target/gp-api-1.0.0.jar`입니다.
 
 ### Windows
 
-JDK 17과 Maven이 설치된 명령 프롬프트에서 실행합니다.
+JDK 25와 Maven이 설치된 명령 프롬프트에서 실행합니다.
 
 ```bat
 build.bat
@@ -141,6 +141,39 @@ curl -X POST http://127.0.0.1:8080/send/v1/account \
 
 두 단계 중 하나라도 실패하면 API는 HTTP 500과 실패 응답을 반환합니다.
 
+### GMSH 계좌정보 해제
+
+```text
+POST /send/v1/account/clear
+Content-Type: application/json
+```
+
+```json
+{
+  "account": "계좌번호"
+}
+```
+
+GMSH에 `CLEARACCTINFO` command를 전송합니다.
+
+### GMSH 화면 열기
+
+```text
+POST /send/v1/screen/open
+Content-Type: application/json
+```
+
+```json
+{
+  "account": "계좌번호",
+  "pw": "계좌비밀번호",
+  "screenNo": "화면번호",
+  "jcode": "종목코드"
+}
+```
+
+비밀번호를 암호화한 후 GMSH에 `OPENSCREEN` command를 전송합니다.
+
 ## 통신 규격
 
 ### GP
@@ -166,7 +199,15 @@ curl -X POST http://127.0.0.1:8080/send/v1/account \
 - 문자열 인코딩: UTF-8
 - `cbData`: NULL 종료 문자를 제외한 JSON byte 길이
 
-전송 JSON:
+지원 command:
+
+| API | command | 필드 |
+|---|---|---|
+| `POST /send/v1/account` | `SETACCTINFO` | `acct_no`, `acct_pwd` |
+| `POST /send/v1/account/clear` | `CLEARACCTINFO` | `acct_no` |
+| `POST /send/v1/screen/open` | `OPENSCREEN` | `acct_no`, `acct_pwd`, `scr_no`, `jcode` |
+
+`SETACCTINFO` 전송 JSON:
 
 ```json
 {

@@ -1,6 +1,8 @@
 package com.example.gpapi.controller;
 
 import com.example.gpapi.dto.AccountRequest;
+import com.example.gpapi.dto.ClearAccountRequest;
+import com.example.gpapi.dto.OpenScreenRequest;
 import com.example.gpapi.dto.RequestLog;
 import com.example.gpapi.event.LogEventBus;
 import com.example.gpapi.service.GpAgentService;
@@ -73,5 +75,50 @@ public class AccountController {
                 "mode", testMode ? "TEST" : "PROD",
                 "message", errMsg
         ));
+    }
+
+    @PostMapping("/account/clear")
+    public ResponseEntity<?> clearAccount(@RequestBody ClearAccountRequest request) {
+        try {
+            gmshAccountService.clearAccountInfo(request.getAccount());
+            return successResponse("CLEARACCTINFO");
+        } catch (Exception e) {
+            return failureResponse("CLEARACCTINFO", messageOf(e));
+        }
+    }
+
+    @PostMapping("/screen/open")
+    public ResponseEntity<?> openScreen(@RequestBody OpenScreenRequest request) {
+        try {
+            gmshAccountService.openScreen(
+                    request.getAccount(),
+                    request.getPw(),
+                    request.getScreenNo(),
+                    request.getJcode());
+            return successResponse("OPENSCREEN");
+        } catch (Exception e) {
+            return failureResponse("OPENSCREEN", messageOf(e));
+        }
+    }
+
+    private ResponseEntity<?> successResponse(String command) {
+        return ResponseEntity.ok(Map.of(
+                "result", "success",
+                "mode", runtimeMode.isTestMode() ? "TEST" : "PROD",
+                "command", command
+        ));
+    }
+
+    private ResponseEntity<?> failureResponse(String command, String message) {
+        return ResponseEntity.internalServerError().body(Map.of(
+                "result", "fail",
+                "mode", runtimeMode.isTestMode() ? "TEST" : "PROD",
+                "command", command,
+                "message", message
+        ));
+    }
+
+    private static String messageOf(Exception e) {
+        return e.getMessage() == null ? "unknown error" : e.getMessage();
     }
 }

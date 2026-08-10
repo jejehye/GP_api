@@ -2,8 +2,6 @@ package com.example.gpapi.service;
 
 import com.example.gpapi.dto.StepResult;
 import com.example.gpapi.event.LogEventBus;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
@@ -16,6 +14,8 @@ import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.LRESULT;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -43,34 +43,55 @@ public class GmshAccountService {
     }
 
     public void setAccountInfo(String accountNo, String accountPassword) {
+        Map<String, String> payload = new LinkedHashMap<>();
+        payload.put("command", "SETACCTINFO");
+        payload.put("acct_no", accountNo == null ? "" : accountNo);
+        payload.put("acct_pwd", simpleEncryptA(accountPassword, true));
+        sendCommand(payload, "GMSH 계좌 설정", accountNo);
+    }
+
+    public void clearAccountInfo(String accountNo) {
+        Map<String, String> payload = new LinkedHashMap<>();
+        payload.put("command", "CLEARACCTINFO");
+        payload.put("acct_no", accountNo == null ? "" : accountNo);
+        sendCommand(payload, "GMSH 계좌 해제", accountNo);
+    }
+
+    public void openScreen(String accountNo, String accountPassword, String screenNo, String jcode) {
+        Map<String, String> payload = new LinkedHashMap<>();
+        payload.put("command", "OPENSCREEN");
+        payload.put("acct_no", accountNo == null ? "" : accountNo);
+        payload.put("acct_pwd", simpleEncryptA(accountPassword, true));
+        payload.put("scr_no", screenNo == null ? "" : screenNo);
+        payload.put("jcode", jcode == null ? "" : jcode);
+        sendCommand(payload, "GMSH 화면 열기", accountNo);
+    }
+
+    private void sendCommand(Map<String, String> payload, String step, String accountNo) {
+        String command = payload.get("command");
         if (!windows) {
-            System.out.println("[GMSH] 비 Windows 환경 — SETACCTINFO 통신 비활성화");
+            System.out.println("[GMSH] 비 Windows 환경 — " + command + " 통신 비활성화");
             return;
         }
 
         HWND hwnd = User32.INSTANCE.FindWindow(GMSH_CLASS_NAME, null);
         if (hwnd == null) {
-            eventBus.publishStep(StepResult.fail("GMSH 계좌 송신 실패", "GMSH 프로그램을 찾지 못했습니다."));
+            eventBus.publishStep(StepResult.fail(step + " 실패", "GMSH 프로그램을 찾지 못했습니다."));
             throw new IllegalStateException("GMSH 프로그램을 찾지 못했습니다.");
         }
-
-        Map<String, String> payload = new LinkedHashMap<>();
-        payload.put("command", "SETACCTINFO");
-        payload.put("acct_no", accountNo == null ? "" : accountNo);
-        payload.put("acct_pwd", simpleEncryptA(accountPassword, true));
 
         String json;
         try {
             json = objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("GMSH 요청 JSON 생성 실패", e);
         }
 
-        sendCopyData(hwnd, json);
-        eventBus.publishStep(StepResult.success("GMSH 계좌 송신 성공", "계좌=" + accountNo));
+        sendCopyData(hwnd, json, step);
+        eventBus.publishStep(StepResult.success(step + " 성공", "계좌=" + accountNo));
     }
 
-    private void sendCopyData(HWND targetHwnd, String json) {
+    private void sendCopyData(HWND targetHwnd, String json, String step) {
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
         Memory memory = new Memory(bytes.length);
         memory.write(0, bytes, 0, bytes.length);
@@ -98,7 +119,7 @@ public class GmshAccountService {
 
         if (returnValue == 0) {
             eventBus.publishStep(StepResult.fail(
-                    "GMSH 계좌 송신 실패",
+                    step + " 실패",
                     "LRESULT=0, GetLastError=" + error));
             throw new IllegalStateException("GMSH 계좌 송신 실패: LRESULT=0, GetLastError=" + error);
         }
