@@ -6,8 +6,8 @@ PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 MAVEN_VERSION=3.9.11
 MAVEN_DIR="$PROJECT_DIR/.tools/apache-maven-$MAVEN_VERSION"
 
-if ! /usr/libexec/java_home -v 25 >/dev/null 2>&1; then
-    echo "[ERROR] JDK 25 is required. Install Temurin JDK 25." >&2
+if ! /usr/libexec/java_home -v 17 >/dev/null 2>&1; then
+    echo "[ERROR] JDK 17 is required. Install Temurin or Microsoft OpenJDK 17." >&2
     exit 1
 fi
 

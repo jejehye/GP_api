@@ -2,6 +2,8 @@ package com.example.gpapi.service;
 
 import com.example.gpapi.dto.StepResult;
 import com.example.gpapi.event.LogEventBus;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
@@ -14,8 +16,6 @@ import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.LRESULT;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import org.springframework.stereotype.Service;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -83,7 +83,7 @@ public class GmshAccountService {
         String json;
         try {
             json = objectMapper.writeValueAsString(payload);
-        } catch (JacksonException e) {
+        } catch (JsonProcessingException e) {
             throw new IllegalStateException("GMSH 요청 JSON 생성 실패", e);
         }
 

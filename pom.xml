@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.0</version>
+        <version>3.2.5</version>
         <relativePath/>
     </parent>
 
@@ -19,9 +19,9 @@
     <description>GP API Agent with Swing GUI</description>
 
     <properties>
-        <java.version>25</java.version>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -74,7 +74,7 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.42</version>
+                            <version>1.18.30</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -117,7 +117,7 @@
                                 <path>jre</path>
                                 <bundledJre64Bit>true</bundledJre64Bit>
                                 <bundledJreAsFallback>false</bundledJreAsFallback>
-                                <minVersion>25</minVersion>
+                                <minVersion>17</minVersion>
                                 <opts>
                                     <!-- launch4j는 javaw를 자식 프로세스로 띄우므로 EXE 자신의 경로를
                                          런타임에서 알 수 없다. %EXEFILE%(= EXE 절대경로)을 넘겨줘야
@@ -156,7 +156,7 @@
                                 <path>jre</path>
                                 <bundledJre64Bit>true</bundledJre64Bit>
                                 <bundledJreAsFallback>false</bundledJreAsFallback>
-                                <minVersion>25</minVersion>
+                                <minVersion>17</minVersion>
                                 <opts>
                                     <opt>-Dloader.main=com.example.gpapi.mock.MockGp</opt>
                                 </opts>
@@ -184,7 +184,7 @@
               3) maven-assembly-plugin이 EXE+jar+jre 를 ZIP으로 묶음 (gp-api-portable.zip)
 
               jlink는 빌드를 수행하는 JDK의 ${java.home}/bin/jlink를 호출하므로
-              빌드 환경에 JDK 25가 있어야 한다. (JRE만 있는 환경에선 실행 불가)
+              빌드 환경에 JDK 17+가 있어야 한다. (JRE만 있는 환경에선 실행 불가)
             -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

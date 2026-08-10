@@ -14,8 +14,8 @@ Spring Boot, Swing, JNA를 사용하며 Windows 프로그램과는 `WM_COPYDATA`
 
 ## 요구 환경
 
-- 소스 빌드: JDK 25
-- JAR 실행: JRE/JDK 25
+- 소스 빌드: JDK 17 이상
+- JAR 실행: JRE/JDK 17 이상
 - portable ZIP 실행: 별도 Java 설치 불필요
 - 실행: Windows 64-bit 권장
 - 로컬 API 주소: `http://127.0.0.1:8080`
@@ -26,7 +26,7 @@ API 서버는 보안을 위해 `127.0.0.1`에만 바인딩됩니다. 같은 PC�
 
 ### macOS 로컬 개발
 
-JDK 25가 설치되어 있으면 프로젝트 전용 Maven 3.9.11과 독립 의존성 캐시를 사용합니다.
+JDK 17이 설치되어 있으면 프로젝트 전용 Maven 3.9.11과 독립 의존성 캐시를 사용합니다.
 
 ```bash
 ./setup-local.sh
@@ -44,7 +44,7 @@ macOS 빌드의 주 산출물은 `target/gp-api-1.0.0.jar`입니다.
 
 ### Windows
 
-JDK 25와 Maven이 설치된 명령 프롬프트에서 실행합니다.
+JDK 17과 Maven이 설치된 명령 프롬프트에서 실행합니다.
 
 ```bat
 build.bat

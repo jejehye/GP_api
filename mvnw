@@ -7,7 +7,7 @@ MAVEN_HOME="$PROJECT_DIR/.tools/apache-maven-3.9.11"
 
 if [ -z "${JAVA_HOME:-}" ] || [ ! -x "$JAVA_HOME/bin/java" ]; then
     if [ -x /usr/libexec/java_home ]; then
-        JAVA_HOME=$(/usr/libexec/java_home -v 25)
+        JAVA_HOME=$(/usr/libexec/java_home -v 17)
         export JAVA_HOME
     fi
 fi

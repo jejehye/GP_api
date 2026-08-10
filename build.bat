@@ -1,6 +1,6 @@
 @echo off
 REM Windows 빌드 스크립트
-REM 실행 전 PC에 JDK 25와 Maven이 설치되어 있어야 합니다.
+REM 실행 전 PC에 JDK 17과 Maven이 설치되어 있어야 합니다.
 
 echo ============================================
 echo  GP API Agent - Windows 빌드 스크립트
@@ -18,7 +18,7 @@ if errorlevel 1 (
 where java >nul 2>nul
 if errorlevel 1 (
     echo [ERROR] Java가 설치되어 있지 않거나 PATH에 없습니다.
-    echo JDK 25 설치: https://adoptium.net/
+    echo JDK 17 설치: https://adoptium.net/
     pause
     exit /b 1
 )
