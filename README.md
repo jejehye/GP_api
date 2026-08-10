@@ -1,132 +1,213 @@
 # GP API Agent
 
-Spring Boot REST API + Swing GUI + JNA를 이용해 Windows GP 프로그램과 WM_COPYDATA로 IPC하는 에이전트.
+로컬 REST API 요청을 받아 Windows의 GP와 GMSH 프로그램에 계좌 정보를 전달하는 데스크톱 에이전트입니다.
+Spring Boot, Swing, JNA를 사용하며 Windows 프로그램과는 `WM_COPYDATA`로 통신합니다.
+
+## 주요 기능
+
+- `POST /send/v1/account` 계좌정보 전송 API
+- GP 또는 Mock GP 자동 검색 및 HWND 등록
+- GMSH `SETACCTINFO` 동시 전송
+- GMSH 전송 전 계좌 비밀번호 암호화
+- 요청 내용과 단계별 전송 결과를 보여주는 Swing GUI
+- Windows 실행 파일 및 JRE 포함 portable ZIP 빌드
+
+## 요구 환경
+
+- 빌드: JDK 17 이상
+- 실행: Windows 64-bit 권장
+- 로컬 API 주소: `http://127.0.0.1:8080`
+
+API 서버는 보안을 위해 `127.0.0.1`에만 바인딩됩니다. 같은 PC에서 실행되는 프로그램만 호출할 수 있습니다.
 
 ## 빌드
 
-### macOS 로컬 개발 환경
+### macOS 로컬 개발
 
-JDK 17만 설치되어 있으면 프로젝트 전용 Maven과 의존성 캐시를 사용합니다.
+JDK 17이 설치되어 있으면 프로젝트 전용 Maven 3.9.11과 독립 의존성 캐시를 사용합니다.
 
 ```bash
 ./setup-local.sh
 ./build.sh
 ```
 
-직접 Maven 명령을 실행할 때는 전역 `mvn` 대신 `./mvnw`를 사용합니다.
+일반 Maven 명령도 프로젝트 래퍼로 실행할 수 있습니다.
 
 ```bash
 ./mvnw test
 ./mvnw spring-boot:run
 ```
 
-Windows EXE와 portable ZIP은 Windows에서 `build.bat`로 생성합니다.
+macOS 빌드의 주 산출물은 `target/gp-api-1.0.0.jar`입니다.
 
-### 일반 Maven 빌드
+### Windows
 
-```bash
-mvn clean package
+JDK 17과 Maven이 설치된 명령 프롬프트에서 실행합니다.
+
+```bat
+build.bat
 ```
 
-빌드 결과물 (`target/` 디렉토리):
+빌드 산출물:
 
 | 파일 | 설명 |
 |---|---|
-| `gp-api-1.0.0.jar` | Spring Boot 실행 가능 JAR (모든 기능 포함) |
-| `GpApi.exe` | 본 API 서버 (Windows EXE) |
-| `MockGp.exe` | 테스트용 Mock GP (Windows EXE) |
-
-> EXE 실행에는 PC에 **JRE 17 이상**이 설치되어 있어야 합니다 (예: Adoptium Temurin 17).
+| `target/gp-api-1.0.0.jar` | 모든 OS에서 실행 가능한 Spring Boot JAR |
+| `target/GpApi.exe` | Windows용 API 서버 및 GUI |
+| `target/MockGp.exe` | Windows용 테스트 GP |
+| `target/gp-api-portable.zip` | 실행 파일과 전용 JRE가 포함된 배포 패키지 |
 
 ## 실행
 
-### 사내망 / 실제 GP 환경
+### Windows 운영 환경
 
-1. 실제 GP 프로그램(`WndBroker_GP`)을 먼저 실행
-2. `GpApi.exe` 실행 → Swing 창이 뜨고 GP 창을 자동으로 찾음
-3. `POST http://localhost:8080/send/v1/account` 로 요청
+1. GP 프로그램과 GMSH 프로그램을 실행합니다.
+2. `GpApi.exe`를 실행합니다.
+3. GUI에서 연결 상태를 확인합니다.
+4. 같은 PC에서 계좌정보 API를 호출합니다.
 
-```bash
-curl -X POST http://localhost:8080/send/v1/account ^
-  -H "Content-Type: application/json" ^
-  -d "{\"pw\":\"1234\",\"account\":\"우리은행1002458969333\"}"
-```
-
-### 집 / 사외망 테스트 (Mock GP 사용)
-
-1. `MockGp.exe` 먼저 실행 (Mock GP 창이 뜸)
-2. `GpApi.exe` 실행 → Mock GP를 GP로 인식하고 HWND 등록
-3. Mock GP 창에 "Java 에이전트 HWND 등록 완료" 로그가 찍히고 버튼 활성화
-4. **API → GP 흐름**: 위 curl 호출 → Mock GP에 JSON이 수신됨
-5. **GP → API 흐름**: Mock GP의 "계좌 정보 요청 보내기" 버튼 클릭 → 에이전트가 마지막 계좌를 다시 전송
-
-### 비 Windows (개발용)
-
-JAR을 직접 실행하면 macOS/Linux에서도 GUI와 API가 뜹니다. 단, JNA Win32 API는 호출되지 않고 **개발 모드 로그**만 찍힙니다.
+### JAR 직접 실행
 
 ```bash
 java -jar target/gp-api-1.0.0.jar
 ```
 
-## 프로젝트 구조
+macOS와 Linux에서도 GUI와 API 서버는 실행되지만 Win32 통신은 비활성화됩니다.
 
+### Mock GP 테스트
+
+1. `MockGp.exe`를 실행합니다.
+2. `GpApi.exe`를 실행합니다.
+3. Mock GP에 `Java 에이전트 HWND 등록 완료` 로그가 표시되는지 확인합니다.
+4. API를 호출하고 Mock GP의 수신 로그를 확인합니다.
+
+## API
+
+### 계좌정보 전송
+
+```text
+POST /send/v1/account
+Content-Type: application/json
 ```
-src/main/java/com/example/gpapi/
-├── GpApiApplication.java         (Spring Boot 진입점, headless=false)
-├── controller/AccountController.java  (POST /send/v1/account)
-├── service/GpAgentService.java   (JNA 기반 Win32 IPC 로직)
-├── dto/AccountRequest.java       (요청 본문)
-├── dto/StepResult.java           (단계별 실행 결과)
-├── event/LogEventBus.java        (서비스 → GUI 이벤트 전달)
-├── ui/MainFrame.java             (Swing GUI)
-└── mock/MockGp.java              (테스트용 가짜 GP)
-```
 
-## API 명세
+요청 본문:
 
-### POST /send/v1/account
-
-기존 GP 계좌 전송 후 GMSH(`GmshMainApp-CLASS`)에도 `SETACCTINFO`를 전송합니다.
-GMSH 전송은 `WM_COPYDATA`, `dwData=91005` 규격을 사용하며 비밀번호는
-`SimpleEncryptA(..., true)` 방식으로 암호화됩니다.
-
-요청:
 ```json
-{ "account": "우리은행1002458969333", "pw": "1234" }
+{
+  "account": "계좌번호",
+  "pw": "계좌비밀번호"
+}
 ```
 
-응답 (성공):
+Windows CMD 호출 예시:
+
+```bat
+curl -X POST http://127.0.0.1:8080/send/v1/account ^
+  -H "Content-Type: application/json" ^
+  -d "{\"account\":\"계좌번호\",\"pw\":\"계좌비밀번호\"}"
+```
+
+macOS/Linux 호출 예시:
+
+```bash
+curl -X POST http://127.0.0.1:8080/send/v1/account \
+  -H 'Content-Type: application/json' \
+  -d '{"account":"계좌번호","pw":"계좌비밀번호"}'
+```
+
+성공 응답:
+
 ```json
-{ "result": "success" }
+{
+  "result": "success",
+  "mode": "PROD"
+}
 ```
 
-응답 (실패):
+실패 응답:
+
 ```json
-{ "result": "fail", "message": "GP 창을 찾을 수 없습니다." }
+{
+  "result": "fail",
+  "mode": "PROD",
+  "message": "실패 원인"
+}
 ```
 
-## GUI 화면 구성
+호출 한 번에 다음 전송을 순서대로 수행합니다.
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│  서버 실행 중  ▶  POST http://localhost:8080/send/v1/account  │
-├──────────────────────────┬───────────────────────────────────┤
-│ 최근 API 요청 (Body)      │ 단계별 실행 결과                    │
-│                          │ ┌──────┬─────────────┬────┬─────┐ │
-│ [14:32:01]               │ │ 시간 │   단계      │결과│메시지│ │
-│ {                        │ ├──────┼─────────────┼────┼─────┤ │
-│   "account": "우리...",  │ │14:31│GP 창 검색   │성공│HWND=│ │
-│   "pw": "****"           │ │14:31│HWND 등록    │성공│ ok  │ │
-│ }                        │ │14:32│계좌 JSON전송│성공│ ... │ │
-│                          │ └──────┴─────────────┴────┴─────┘ │
-└──────────────────────────┴───────────────────────────────────┘
-                                                  [ 로그 지우기 ]
-```
+1. GP에 계좌 JSON 전송
+2. GMSH에 `SETACCTINFO` JSON 전송
 
-## WM_COPYDATA 프로토콜
+두 단계 중 하나라도 실패하면 API는 HTTP 500과 실패 응답을 반환합니다.
+
+## 통신 규격
+
+### GP
+
+대상 창:
+
+- Class name: `WGToSH`
+- Window title: `WndBroker_GP`
 
 | dwData | 방향 | 의미 |
 |---|---|---|
-| 100 | Agent → GP | 내 HWND 등록 |
-| 101 | GP → Agent | "계좌 정보 보내라" 요청 |
-| 102 | Agent → GP | 계좌 JSON 응답 |
+| `100` | Agent → GP | Agent HWND 등록 |
+| `101` | GP → Agent | 계좌정보 요청 또는 연결 응답 |
+| `102` | Agent → GP | 계좌 JSON 전송 |
+
+### GMSH
+
+대상 창:
+
+- Class name: `GmshMainApp-CLASS`
+- Window title: 지정하지 않음
+- `dwData`: `91005`
+- 문자열 인코딩: UTF-8
+- `cbData`: NULL 종료 문자를 제외한 JSON byte 길이
+
+전송 JSON:
+
+```json
+{
+  "command": "SETACCTINFO",
+  "acct_no": "계좌번호",
+  "acct_pwd": "암호화된 비밀번호"
+}
+```
+
+`acct_pwd`는 상대 프로그램의 `SimpleEncryptA(value, true)` 규격으로 암호화한 값입니다. 평문 비밀번호는 GMSH JSON에 포함하지 않습니다.
+
+## 프로젝트 구조
+
+```text
+src/main/java/com/example/gpapi/
+├── GpApiApplication.java
+├── controller/
+│   └── AccountController.java
+├── dto/
+│   ├── AccountRequest.java
+│   ├── RequestLog.java
+│   └── StepResult.java
+├── event/
+│   └── LogEventBus.java
+├── inspector/
+│   └── WindowInspector.java
+├── mock/
+│   └── MockGp.java
+├── service/
+│   ├── GmshAccountService.java
+│   ├── GpAgentService.java
+│   └── RuntimeMode.java
+├── startup/
+│   └── StartupManager.java
+└── ui/
+    └── MainFrame.java
+```
+
+## 보안 참고사항
+
+- API는 루프백 주소에만 노출됩니다.
+- GUI와 로그에는 비밀번호가 마스킹되어 표시됩니다.
+- 저장소에 실제 계좌번호나 비밀번호를 커밋하지 마세요.
+- 운영 배포 전 Windows 실행 파일의 코드 서명을 권장합니다.
