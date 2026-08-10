@@ -14,7 +14,9 @@ Spring Boot, Swing, JNA를 사용하며 Windows 프로그램과는 `WM_COPYDATA`
 
 ## 요구 환경
 
-- 빌드 및 실행: JDK 25
+- 소스 빌드: JDK 25
+- JAR 실행: JRE/JDK 25
+- portable ZIP 실행: 별도 Java 설치 불필요
 - 실행: Windows 64-bit 권장
 - 로컬 API 주소: `http://127.0.0.1:8080`
 
@@ -83,7 +85,15 @@ macOS와 Linux에서도 GUI와 API 서버는 실행되지만 Win32 통신은 비
 
 ## API
 
-### 계좌정보 전송
+모든 API는 `POST`와 `Content-Type: application/json`을 사용합니다.
+
+| 기능 | URL | GMSH command | 통신 대상 |
+|---|---|---|---|
+| 계좌정보 설정 | `/send/v1/account` | `SETACCTINFO` | GP 전송 후 GMSH 전송 |
+| 계좌정보 해제 | `/send/v1/account/clear` | `CLEARACCTINFO` | GMSH |
+| 화면 열기 | `/send/v1/screen/open` | `OPENSCREEN` | GMSH |
+
+### 1. 계좌정보 설정 — SETACCTINFO
 
 ```text
 POST /send/v1/account
@@ -141,7 +151,7 @@ curl -X POST http://127.0.0.1:8080/send/v1/account \
 
 두 단계 중 하나라도 실패하면 API는 HTTP 500과 실패 응답을 반환합니다.
 
-### GMSH 계좌정보 해제
+### 2. 계좌정보 해제 — CLEARACCTINFO
 
 ```text
 POST /send/v1/account/clear
@@ -154,9 +164,27 @@ Content-Type: application/json
 }
 ```
 
+호출 예시:
+
+```bash
+curl -X POST http://127.0.0.1:8080/send/v1/account/clear \
+  -H 'Content-Type: application/json' \
+  -d '{"account":"계좌번호"}'
+```
+
 GMSH에 `CLEARACCTINFO` command를 전송합니다.
 
-### GMSH 화면 열기
+성공 응답:
+
+```json
+{
+  "result": "success",
+  "mode": "PROD",
+  "command": "CLEARACCTINFO"
+}
+```
+
+### 3. 화면 열기 — OPENSCREEN
 
 ```text
 POST /send/v1/screen/open
@@ -172,7 +200,32 @@ Content-Type: application/json
 }
 ```
 
+호출 예시:
+
+```bash
+curl -X POST http://127.0.0.1:8080/send/v1/screen/open \
+  -H 'Content-Type: application/json' \
+  -d '{"account":"계좌번호","pw":"계좌비밀번호","screenNo":"화면번호","jcode":"종목코드"}'
+```
+
 비밀번호를 암호화한 후 GMSH에 `OPENSCREEN` command를 전송합니다.
+
+성공 응답:
+
+```json
+{
+  "result": "success",
+  "mode": "PROD",
+  "command": "OPENSCREEN"
+}
+```
+
+### 오류 처리
+
+- 대상 Windows 창을 찾지 못하면 HTTP 500을 반환합니다.
+- `SendMessage` 결과가 `0`이면 실패로 처리합니다.
+- `message`에는 창 검색 또는 전송 실패 원인이 포함됩니다.
+- macOS/Linux 개발 환경에서는 Win32 전송을 건너뜁니다.
 
 ## 통신 규격
 
@@ -228,6 +281,8 @@ src/main/java/com/example/gpapi/
 │   └── AccountController.java
 ├── dto/
 │   ├── AccountRequest.java
+│   ├── ClearAccountRequest.java
+│   ├── OpenScreenRequest.java
 │   ├── RequestLog.java
 │   └── StepResult.java
 ├── event/
