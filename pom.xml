@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.example</groupId>
+    <artifactId>gp-api</artifactId>
+    <version>1.0.0</version>
+    <name>gp-api</name>
+    <description>GP API Agent with Swing GUI</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.14.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
+            <version>5.14.0</version>
+        </dependency>
+
+        <!-- 모던 Swing 룩앤필 -->
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>3.4.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}-${project.version}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.30</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.example.gpapi.GpApiApplication</mainClass>
+                    <layout>ZIP</layout>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- launch4j: Spring Boot fat jar -> Windows EXE -->
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <version>2.5.2</version>
+                <executions>
+                    <execution>
+                        <id>l4j-gui</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <jar>${project.build.directory}/${project.build.finalName}.jar</jar>
+                            <outfile>${project.build.directory}/GpApi.exe</outfile>
+                            <icon>${project.basedir}/src/main/resources/icons/GpApi.ico</icon>
+                            <downloadUrl>https://adoptium.net/</downloadUrl>
+                            <jre>
+                                <path>jre</path>
+                                <bundledJre64Bit>true</bundledJre64Bit>
+                                <bundledJreAsFallback>false</bundledJreAsFallback>
+                                <minVersion>17</minVersion>
+                                <opts>
+                                    <!-- launch4j는 javaw를 자식 프로세스로 띄우므로 EXE 자신의 경로를
+                                         런타임에서 알 수 없다. %EXEFILE%(= EXE 절대경로)을 넘겨줘야
+                                         '윈도우 시작 시 자동 실행' 등록에 올바른 경로를 쓸 수 있다. -->
+                                    <opt>-Dgpapi.exe="%EXEFILE%"</opt>
+                                </opts>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>1.0.0</txtFileVersion>
+                                <fileDescription>GP API Agent</fileDescription>
+                                <copyright>2025</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>1.0.0</txtProductVersion>
+                                <productName>GP API</productName>
+                                <internalName>GpApi</internalName>
+                                <originalFilename>GpApi.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+
+                    <!-- Mock GP EXE -->
+                    <execution>
+                        <id>l4j-mock</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <jar>${project.build.directory}/${project.build.finalName}.jar</jar>
+                            <outfile>${project.build.directory}/MockGp.exe</outfile>
+                            <icon>${project.basedir}/src/main/resources/icons/MockGp.ico</icon>
+                            <downloadUrl>https://adoptium.net/</downloadUrl>
+                            <jre>
+                                <path>jre</path>
+                                <bundledJre64Bit>true</bundledJre64Bit>
+                                <bundledJreAsFallback>false</bundledJreAsFallback>
+                                <minVersion>17</minVersion>
+                                <opts>
+                                    <opt>-Dloader.main=com.example.gpapi.mock.MockGp</opt>
+                                </opts>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>1.0.0</txtFileVersion>
+                                <fileDescription>Mock GP for testing</fileDescription>
+                                <copyright>2025</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>1.0.0</txtProductVersion>
+                                <productName>Mock GP</productName>
+                                <internalName>MockGp</internalName>
+                                <originalFilename>MockGp.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+              standalone JRE 동봉:
+              1) jlink로 target/jre 생성 (Spring Boot + JNA + Swing이 쓰는 모듈만)
+              2) launch4j가 EXE 옆 jre/ 를 우선 사용
+              3) maven-assembly-plugin이 EXE+jar+jre 를 ZIP으로 묶음 (gp-api-portable.zip)
+
+              jlink는 빌드를 수행하는 JDK의 ${java.home}/bin/jlink를 호출하므로
+              빌드 환경에 JDK 17+가 있어야 한다. (JRE만 있는 환경에선 실행 불가)
+            -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>1-clean-jre-dir</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>cmd</executable>
+                            <arguments>
+                                <argument>/c</argument>
+                                <argument>if exist "${project.build.directory}\jre" rmdir /s /q "${project.build.directory}\jre"</argument>
+                            </arguments>
+                            <successCodes>
+                                <successCode>0</successCode>
+                                <successCode>1</successCode>
+                            </successCodes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>2-jlink-bundle-jre</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${java.home}/bin/jlink</executable>
+                            <arguments>
+                                <argument>--module-path</argument>
+                                <argument>${java.home}/jmods</argument>
+                                <argument>--add-modules</argument>
+                                <argument>java.base,java.desktop,java.logging,java.management,java.naming,java.sql,java.net.http,java.instrument,java.xml,java.security.jgss,java.security.sasl,jdk.unsupported,jdk.crypto.ec,jdk.localedata,jdk.httpserver,jdk.zipfs,jdk.charsets</argument>
+                                <argument>--include-locales=en,ko</argument>
+                                <argument>--output</argument>
+                                <argument>${project.build.directory}/jre</argument>
+                                <argument>--strip-debug</argument>
+                                <argument>--no-header-files</argument>
+                                <argument>--no-man-pages</argument>
+                                <argument>--compress=2</argument>
+                            </arguments>
+                            <successCodes>
+                                <successCode>0</successCode>
+                            </successCodes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- portable ZIP 생성: target/gp-api-portable.zip -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.7.1</version>
+                <executions>
+                    <execution>
+                        <id>portable-zip</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/portable.xml</descriptor>
+                            </descriptors>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <finalName>gp-api-portable</finalName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

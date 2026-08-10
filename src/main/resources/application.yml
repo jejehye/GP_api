@@ -1,0 +1,15 @@
+server:
+  port: 8080
+  # loopback 전용 바인딩 — Windows 방화벽 알림 방지 +
+  # 같은 PC의 프로세스에서만 API 호출 가능 (보안)
+  address: 127.0.0.1
+
+spring:
+  main:
+    banner-mode: off
+    web-application-type: servlet
+
+logging:
+  level:
+    root: INFO
+    com.example.gpapi: DEBUG

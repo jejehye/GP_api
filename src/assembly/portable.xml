@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  portable distribution: target/gp-api-portable.zip
+  ZIP 안에 EXE 두 개 + 동봉 JRE + (참고용) jar이 들어 있어
+  Windows 어느 PC에서나 압축 해제 후 GpApi.exe / MockGp.exe 더블클릭만으로 실행 가능.
+-->
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.2.0
+                              http://maven.apache.org/xsd/assembly-2.2.0.xsd">
+    <id>portable</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>gp-api-portable</baseDirectory>
+
+    <fileSets>
+        <!-- EXE 두 개 -->
+        <fileSet>
+            <directory>${project.build.directory}</directory>
+            <outputDirectory>.</outputDirectory>
+            <includes>
+                <include>GpApi.exe</include>
+                <include>MockGp.exe</include>
+            </includes>
+        </fileSet>
+        <!-- 동봉 JRE -->
+        <fileSet>
+            <directory>${project.build.directory}/jre</directory>
+            <outputDirectory>jre</outputDirectory>
+            <fileMode>0755</fileMode>
+            <directoryMode>0755</directoryMode>
+        </fileSet>
+        <!-- 참고용: fat jar (java -jar로도 실행 가능) -->
+        <fileSet>
+            <directory>${project.build.directory}</directory>
+            <outputDirectory>.</outputDirectory>
+            <includes>
+                <include>${project.build.finalName}.jar</include>
+            </includes>
+        </fileSet>
+        <!-- FlaUInspect: HTML/UI 요소 인스펙터 (UI Automation 기반) -->
+        <fileSet>
+            <directory>${project.basedir}/src/assembly/tools/FlaUInspect</directory>
+            <outputDirectory>tools/FlaUInspect</outputDirectory>
+            <fileMode>0755</fileMode>
+            <directoryMode>0755</directoryMode>
+        </fileSet>
+    </fileSets>
+
+    <!-- README -->
+    <files>
+        <file>
+            <source>${project.basedir}/src/assembly/README-portable.txt</source>
+            <outputDirectory>.</outputDirectory>
+            <destName>README.txt</destName>
+        </file>
+    </files>
+</assembly>
