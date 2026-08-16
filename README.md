@@ -50,6 +50,10 @@ JDK 17과 Maven이 설치된 명령 프롬프트에서 실행합니다.
 build.bat
 ```
 
+GitHub에서도 `Actions` → `Build Windows Portable` → `Run workflow`로
+Windows portable ZIP을 생성할 수 있습니다. 완료 후 실행 결과의
+`gp-api-portable-windows` artifact를 내려받습니다.
+
 빌드 산출물:
 
 | 파일 | 설명 |

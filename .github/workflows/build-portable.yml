@@ -1,0 +1,43 @@
+name: Build Windows Portable
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build portable ZIP
+        shell: cmd
+        run: mvn -B clean package -DskipTests
+
+      - name: Verify portable ZIP
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'target/gp-api-portable.zip')) {
+            throw 'target/gp-api-portable.zip was not created.'
+          }
+          Get-Item 'target/gp-api-portable.zip' | Format-List Name,Length,LastWriteTime
+
+      - name: Upload portable ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: gp-api-portable-windows
+          path: target/gp-api-portable.zip
+          if-no-files-found: error
+          retention-days: 30
