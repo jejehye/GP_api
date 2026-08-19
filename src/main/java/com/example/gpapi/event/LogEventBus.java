@@ -2,9 +2,10 @@ package com.example.gpapi.event;
 
 import com.example.gpapi.dto.RequestLog;
 import com.example.gpapi.dto.StepResult;
-import com.example.gpapi.service.RuntimeMode;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
+// TEST 모드 제거 전 import 보존:
+// import com.example.gpapi.service.RuntimeMode;
+// import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.time.format.DateTimeFormatter;
@@ -17,19 +18,19 @@ public class LogEventBus {
 
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    /** 모드 전환 단계의 라벨 — 이 라벨로 들어오면 MODE_CHANGE 로 스탬프 */
-    private static final String MODE_CHANGE_STEP = "통신 모드 변경";
+    // TEST 모드 제거 전 코드 보존:
+    // private static final String MODE_CHANGE_STEP = "통신 모드 변경";
 
     private final List<Consumer<StepResult>> stepListeners = new CopyOnWriteArrayList<>();
     private final List<Consumer<RequestLog>> requestListeners = new CopyOnWriteArrayList<>();
 
-    /** RuntimeMode 가 LogEventBus 를 의존하므로 순환 해소를 위해 @Lazy */
-    private final RuntimeMode runtimeMode;
-
-    @Autowired
-    public LogEventBus(@Lazy RuntimeMode runtimeMode) {
-        this.runtimeMode = runtimeMode;
-    }
+    // TEST 모드 제거 전 코드 보존:
+    // private final RuntimeMode runtimeMode;
+    //
+    // @Autowired
+    // public LogEventBus(@Lazy RuntimeMode runtimeMode) {
+    //     this.runtimeMode = runtimeMode;
+    // }
 
     public void onStep(Consumer<StepResult> listener) {
         stepListeners.add(listener);
@@ -40,15 +41,16 @@ public class LogEventBus {
     }
 
     public void publishStep(StepResult result) {
-        // 모드 스탬프 — UI 렌더러가 행 배경색 결정에 사용
+        // 운영 모드로 고정. 기존 TEST/모드전환 분기는 아래 주석으로 보존한다.
         if (result.getMode() == null) {
-            if (MODE_CHANGE_STEP.equals(result.getStep())) {
-                result.setMode(StepResult.Mode.MODE_CHANGE);
-            } else {
-                result.setMode(runtimeMode.isTestMode()
-                        ? StepResult.Mode.TEST
-                        : StepResult.Mode.PROD);
-            }
+            result.setMode(StepResult.Mode.PROD);
+            // if (MODE_CHANGE_STEP.equals(result.getStep())) {
+            //     result.setMode(StepResult.Mode.MODE_CHANGE);
+            // } else {
+            //     result.setMode(runtimeMode.isTestMode()
+            //             ? StepResult.Mode.TEST
+            //             : StepResult.Mode.PROD);
+            // }
         }
 
         System.out.printf("[%s] %s | %s | %s | %s%n",

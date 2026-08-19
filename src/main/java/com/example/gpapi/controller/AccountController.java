@@ -7,7 +7,7 @@ import com.example.gpapi.dto.RequestLog;
 import com.example.gpapi.event.LogEventBus;
 import com.example.gpapi.service.GpAgentService;
 import com.example.gpapi.service.GmshAccountService;
-import com.example.gpapi.service.RuntimeMode;
+// TEST 모드 제거 전 코드 보존: import com.example.gpapi.service.RuntimeMode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,18 +24,18 @@ public class AccountController {
     private final GpAgentService gpAgentService;
     private final GmshAccountService gmshAccountService;
     private final LogEventBus eventBus;
-    private final RuntimeMode runtimeMode;
+    // TEST 모드 제거 전 코드 보존: private final RuntimeMode runtimeMode;
 
     private volatile AccountRequest lastRequest;
 
     public AccountController(GpAgentService gpAgentService,
                              GmshAccountService gmshAccountService,
-                             LogEventBus eventBus,
-                             RuntimeMode runtimeMode) {
+                             LogEventBus eventBus) {
+                             // TEST 모드 제거 전 파라미터: RuntimeMode runtimeMode
         this.gpAgentService = gpAgentService;
         this.gmshAccountService = gmshAccountService;
         this.eventBus = eventBus;
-        this.runtimeMode = runtimeMode;
+        // TEST 모드 제거 전 코드 보존: this.runtimeMode = runtimeMode;
     }
 
     public AccountRequest getLastRequest() { return lastRequest; }
@@ -63,16 +63,15 @@ public class AccountController {
                 errMsg
         ));
 
-        boolean testMode = runtimeMode.isTestMode();
+        // TEST 모드 제거 전 코드 보존:
+        // boolean testMode = runtimeMode.isTestMode();
         if (success) {
             return ResponseEntity.ok(Map.of(
-                    "result", "success",
-                    "mode", testMode ? "TEST" : "PROD"
+                    "result", "success"
             ));
         }
         return ResponseEntity.internalServerError().body(Map.of(
                 "result", "fail",
-                "mode", testMode ? "TEST" : "PROD",
                 "message", errMsg
         ));
     }
@@ -104,7 +103,6 @@ public class AccountController {
     private ResponseEntity<?> successResponse(String command) {
         return ResponseEntity.ok(Map.of(
                 "result", "success",
-                "mode", runtimeMode.isTestMode() ? "TEST" : "PROD",
                 "command", command
         ));
     }
@@ -112,7 +110,6 @@ public class AccountController {
     private ResponseEntity<?> failureResponse(String command, String message) {
         return ResponseEntity.internalServerError().body(Map.of(
                 "result", "fail",
-                "mode", runtimeMode.isTestMode() ? "TEST" : "PROD",
                 "command", command,
                 "message", message
         ));
