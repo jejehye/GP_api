@@ -310,8 +310,8 @@ public class GpAgentService {
         cds.lpData = mem;
         cds.write();
 
-        // WM_COPYDATA 규격: wParam에는 데이터를 보내는 윈도우의 HWND를 전달한다.
-        WPARAM senderHwndParam = new WPARAM(Pointer.nativeValue(myHwnd.getPointer()));
+        // GP 수신 프로그램의 기존 규격: wParam에 전송 데이터 크기를 전달한다.
+        WPARAM cbDataParam = new WPARAM(cds.cbData);
         LPARAM cdsPtr = new LPARAM(Pointer.nativeValue(cds.getPointer()));
 
         List<Long> peers = findAllGpWindowPeers();
@@ -322,7 +322,7 @@ public class GpAgentService {
         for (Long peer : peers) {
             HWND target = new HWND(new Pointer(peer));
             Native.setLastError(0);
-            LRESULT r = User32.INSTANCE.SendMessage(target, WM_COPYDATA, senderHwndParam, cdsPtr);
+            LRESULT r = User32.INSTANCE.SendMessage(target, WM_COPYDATA, cbDataParam, cdsPtr);
             int err = Native.getLastError();
             long lr = (r == null) ? -1 : r.longValue();
             System.out.println("[GpAgent] dwData=100 → HWND=0x" + Long.toHexString(peer)
@@ -354,8 +354,8 @@ public class GpAgentService {
         cds.lpData = mem;
         cds.write();
 
-        // WM_COPYDATA 규격: wParam에는 데이터를 보내는 윈도우의 HWND를 전달한다.
-        WPARAM senderHwndParam = new WPARAM(Pointer.nativeValue(myHwnd.getPointer()));
+        // GP 수신 프로그램의 기존 규격: wParam에 전송 데이터 크기를 전달한다.
+        WPARAM cbDataParam = new WPARAM(cds.cbData);
         LPARAM cdsPtr = new LPARAM(Pointer.nativeValue(cds.getPointer()));
 
         List<Long> peers = findAllGpWindowPeers();
@@ -371,7 +371,7 @@ public class GpAgentService {
         for (Long peer : peers) {
             HWND target = new HWND(new Pointer(peer));
             Native.setLastError(0);
-            LRESULT r = User32.INSTANCE.SendMessage(target, WM_COPYDATA, senderHwndParam, cdsPtr);
+            LRESULT r = User32.INSTANCE.SendMessage(target, WM_COPYDATA, cbDataParam, cdsPtr);
             int err = Native.getLastError();
             long lr = (r == null) ? -1 : r.longValue();
             System.out.println("[GpAgent] dwData=102 → HWND=0x" + Long.toHexString(peer)
