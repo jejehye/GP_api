@@ -44,15 +44,28 @@ public class AccountController {
     public ResponseEntity<?> sendAccount(@RequestBody AccountRequest request) {
         this.lastRequest = request;
 
-        boolean success = false;
-        String errMsg = null;
+        boolean gpSuccess = false;
+        boolean gmshSuccess = false;
+        String gpError = null;
+        String gmshError = null;
+
         try {
             gpAgentService.sendAccount(request.getAccount(), request.getPw());
-            gmshAccountService.setAccountInfo(request.getAccount(), request.getPw());
-            success = true;
+            gpSuccess = true;
         } catch (Exception e) {
-            errMsg = e.getMessage() == null ? "unknown error" : e.getMessage();
+            gpError = messageOf(e);
         }
+
+        // GP 전송 결과와 관계없이 GMSH 전송은 반드시 시도한다.
+        try {
+            gmshAccountService.setAccountInfo(request.getAccount(), request.getPw());
+            gmshSuccess = true;
+        } catch (Exception e) {
+            gmshError = messageOf(e);
+        }
+
+        boolean success = gpSuccess && gmshSuccess;
+        String errMsg = combinedError(gpError, gmshError);
 
         int pwLen = request.getPw() == null ? 0 : request.getPw().length();
         eventBus.publishRequest(new RequestLog(
@@ -67,13 +80,28 @@ public class AccountController {
         // boolean testMode = runtimeMode.isTestMode();
         if (success) {
             return ResponseEntity.ok(Map.of(
-                    "result", "success"
+                    "result", "success",
+                    "gp", "success",
+                    "gmsh", "success"
             ));
         }
         return ResponseEntity.internalServerError().body(Map.of(
                 "result", "fail",
+                "gp", gpSuccess ? "success" : "fail",
+                "gmsh", gmshSuccess ? "success" : "fail",
                 "message", errMsg
         ));
+    }
+
+    /** 기존 GP 전송과 무관하게 GMSH SETACCTINFO만 실행한다. */
+    @PostMapping("/gmsh/account")
+    public ResponseEntity<?> sendGmshAccount(@RequestBody AccountRequest request) {
+        try {
+            gmshAccountService.setAccountInfo(request.getAccount(), request.getPw());
+            return successResponse("SETACCTINFO");
+        } catch (Exception e) {
+            return failureResponse("SETACCTINFO", messageOf(e));
+        }
     }
 
     @PostMapping("/account/clear")
@@ -117,5 +145,14 @@ public class AccountController {
 
     private static String messageOf(Exception e) {
         return e.getMessage() == null ? "unknown error" : e.getMessage();
+    }
+
+    private static String combinedError(String gpError, String gmshError) {
+        if (gpError != null && gmshError != null) {
+            return "GP: " + gpError + " | GMSH: " + gmshError;
+        }
+        if (gpError != null) return "GP: " + gpError;
+        if (gmshError != null) return "GMSH: " + gmshError;
+        return "unknown error";
     }
 }

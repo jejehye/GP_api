@@ -93,7 +93,8 @@ macOS와 Linux에서도 GUI와 API 서버는 실행되지만 Win32 통신은 비
 
 | 기능 | URL | GMSH command | 통신 대상 |
 |---|---|---|---|
-| 계좌정보 설정 | `/send/v1/account` | `SETACCTINFO` | GP 전송 후 GMSH 전송 |
+| GP 및 GMSH 계좌정보 설정 | `/send/v1/account` | `SETACCTINFO` | GP와 GMSH를 각각 전송 |
+| GMSH 계좌정보 설정 | `/send/v1/gmsh/account` | `SETACCTINFO` | GMSH |
 | 계좌정보 해제 | `/send/v1/account/clear` | `CLEARACCTINFO` | GMSH |
 | 화면 열기 | `/send/v1/screen/open` | `OPENSCREEN` | GMSH |
 
@@ -134,7 +135,8 @@ curl -X POST http://127.0.0.1:8080/send/v1/account \
 ```json
 {
   "result": "success",
-  "mode": "PROD"
+  "gp": "success",
+  "gmsh": "success"
 }
 ```
 
@@ -143,17 +145,27 @@ curl -X POST http://127.0.0.1:8080/send/v1/account \
 ```json
 {
   "result": "fail",
-  "mode": "PROD",
-  "message": "실패 원인"
+  "gp": "fail",
+  "gmsh": "success",
+  "message": "GP: 실패 원인"
 }
 ```
 
-호출 한 번에 다음 전송을 순서대로 수행합니다.
+호출 한 번에 다음 전송을 각각 시도합니다.
 
 1. GP에 계좌 JSON 전송
 2. GMSH에 `SETACCTINFO` JSON 전송
 
-두 단계 중 하나라도 실패하면 API는 HTTP 500과 실패 응답을 반환합니다.
+GP 전송이 실패해도 GMSH 전송은 계속 실행합니다. 두 단계 중 하나라도 실패하면
+API는 HTTP 500과 각 대상의 `gp`, `gmsh` 결과를 반환합니다.
+
+GMSH `SETACCTINFO`만 전송하려면 다음 URL을 호출합니다.
+
+```bash
+curl -X POST http://127.0.0.1:8080/send/v1/gmsh/account \
+  -H 'Content-Type: application/json' \
+  -d '{"account":"계좌번호","pw":"계좌비밀번호"}'
+```
 
 ### 2. 계좌정보 해제 — CLEARACCTINFO
 
@@ -183,7 +195,6 @@ GMSH에 `CLEARACCTINFO` command를 전송합니다.
 ```json
 {
   "result": "success",
-  "mode": "PROD",
   "command": "CLEARACCTINFO"
 }
 ```
@@ -219,7 +230,6 @@ curl -X POST http://127.0.0.1:8080/send/v1/screen/open \
 ```json
 {
   "result": "success",
-  "mode": "PROD",
   "command": "OPENSCREEN"
 }
 ```
