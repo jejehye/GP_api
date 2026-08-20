@@ -377,7 +377,9 @@ public class GpAgentService {
             System.out.println("[GpAgent] dwData=102 → HWND=0x" + Long.toHexString(peer)
                     + ", LRESULT=" + lr + ", GetLastError=" + err
                     + ", bytes=" + bytes.length);
-            if (lr == 1) {
+            // 일부 GP 버전은 WM_COPYDATA를 처리하고도 LRESULT를 0으로 반환한다.
+            // 대상 HWND가 유효하고 Windows 오류가 없으면 동기 전송 완료로 판단한다.
+            if (r != null && err == 0 && User32.INSTANCE.IsWindow(target)) {
                 anySuccess = true;
             } else {
                 lastErr = "LRESULT=" + lr + ", GetLastError=" + err
