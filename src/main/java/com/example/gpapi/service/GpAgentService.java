@@ -360,7 +360,8 @@ public class GpAgentService {
                         + "\"Etc\":\"\""
                         + "}";
 
-        byte[] bytes = (json + "\0").getBytes(StandardCharsets.UTF_8);
+        // 수신 측은 cbData 길이만큼 JSON을 처리하므로 NUL 종료문자를 포함하지 않는다.
+        byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
 
         Memory mem = new Memory(bytes.length);
         mem.write(0, bytes, 0, bytes.length);
