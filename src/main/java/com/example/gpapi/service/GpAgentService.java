@@ -29,6 +29,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * GP/Mock 과 WM_COPYDATA 100/101/102 흐름.
@@ -57,6 +59,9 @@ public class GpAgentService {
 
     /** "골드넷 연결 성공" 이벤트 중복 방지 — 같은 핸들로 이미 연결 알림을 보냈는지 추적 */
     private volatile long lastConnectedPeer = 0L;
+
+    /** dwData=100 전송 후 GP의 dwData=101 응답을 기다리는 동기화 신호 */
+    private volatile CountDownLatch accountRequestAck = new CountDownLatch(1);
 
     private final boolean windows;
 
@@ -161,11 +166,22 @@ public class GpAgentService {
                 throw new IllegalStateException("골드넷 GP 창을 찾을 수 없습니다.");
             }
             gpHwnd = found;
-            try {
-                sendMyHandle();
-            } catch (Exception e) {
-                throw new RuntimeException("HWND 재등록 실패: " + e.getMessage(), e);
+        }
+
+        // GP 규격 순서 보장: 100(HWND 등록) → 101(계좌정보 요청) → 102(계좌 JSON)
+        accountRequestAck = new CountDownLatch(1);
+        try {
+            sendMyHandle();
+            if (!accountRequestAck.await(3, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("GP 연결 확인 실패: dwData=101 응답 시간 초과");
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("GP 연결 확인 대기 중 중단되었습니다.", e);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("HWND 등록 실패: " + e.getMessage(), e);
         }
 
         sendAccountJson(account, password);
@@ -237,6 +253,7 @@ public class GpAgentService {
                     }
                 }
                 System.out.println("[GpAgent] dwData=101 수신, ack=\"" + ack + "\"");
+                accountRequestAck.countDown();
 
                 // "골드넷 연결 성공" UI 이벤트 — 같은 핸들에서 중복 발행 방지
                 long peer = (gpHwnd != null) ? Pointer.nativeValue(gpHwnd.getPointer()) : 0L;
