@@ -36,7 +36,7 @@ JDK 17이 설치되어 있으면 프로젝트 전용 Maven 3.9.11과 독립 의�
 일반 Maven 명령도 프로젝트 래퍼로 실행할 수 있습니다.
 
 ```bash
-./mvnw test
+./mvnw clean package
 ./mvnw spring-boot:run
 ```
 
@@ -98,7 +98,15 @@ macOS와 Linux에서도 GUI와 API 서버는 실행되지만 Win32 통신은 비
 | 계좌정보 해제 | `/send/v1/account/clear` | `CLEARACCTINFO` | GMSH |
 | 화면 열기 | `/send/v1/screen/open` | `OPENSCREEN` | GMSH |
 
-### 1. 계좌정보 설정 — SETACCTINFO
+### 1. GP 및 GMSH 계좌정보 설정
+
+| 항목 | 명세 |
+|---|---|
+| URI | `POST /send/v1/account` |
+| Content-Type | `application/json` |
+| GP 동작 | `dwData=100 → 101 대기 → 102` 계좌 JSON 전송 |
+| GMSH 동작 | `SETACCTINFO` 전송 |
+| 실패 처리 | 한쪽이 실패해도 다른 쪽 전송은 계속 시도 |
 
 ```text
 POST /send/v1/account
@@ -159,7 +167,25 @@ curl -X POST http://127.0.0.1:8080/send/v1/account \
 GP 전송이 실패해도 GMSH 전송은 계속 실행합니다. 두 단계 중 하나라도 실패하면
 API는 HTTP 500과 각 대상의 `gp`, `gmsh` 결과를 반환합니다.
 
-GMSH `SETACCTINFO`만 전송하려면 다음 URL을 호출합니다.
+### 2. GMSH 계좌정보 설정
+
+| 항목 | 명세 |
+|---|---|
+| URI | `POST /send/v1/gmsh/account` |
+| Content-Type | `application/json` |
+| 통신 대상 | GMSH (`GmshMainApp-CLASS`) |
+| command | `SETACCTINFO` |
+
+요청 본문:
+
+```json
+{
+  "account": "계좌번호",
+  "pw": "계좌비밀번호"
+}
+```
+
+호출 예시:
 
 ```bash
 curl -X POST http://127.0.0.1:8080/send/v1/gmsh/account \
@@ -167,7 +193,23 @@ curl -X POST http://127.0.0.1:8080/send/v1/gmsh/account \
   -d '{"account":"계좌번호","pw":"계좌비밀번호"}'
 ```
 
-### 2. 계좌정보 해제 — CLEARACCTINFO
+성공 응답:
+
+```json
+{
+  "result": "success",
+  "command": "SETACCTINFO"
+}
+```
+
+### 3. GMSH 계좌정보 해제
+
+| 항목 | 명세 |
+|---|---|
+| URI | `POST /send/v1/account/clear` |
+| Content-Type | `application/json` |
+| 통신 대상 | GMSH (`GmshMainApp-CLASS`) |
+| command | `CLEARACCTINFO` |
 
 ```text
 POST /send/v1/account/clear
@@ -199,7 +241,14 @@ GMSH에 `CLEARACCTINFO` command를 전송합니다.
 }
 ```
 
-### 3. 화면 열기 — OPENSCREEN
+### 4. GMSH 화면 열기
+
+| 항목 | 명세 |
+|---|---|
+| URI | `POST /send/v1/screen/open` |
+| Content-Type | `application/json` |
+| 통신 대상 | GMSH (`GmshMainApp-CLASS`) |
+| command | `OPENSCREEN` |
 
 ```text
 POST /send/v1/screen/open
@@ -275,6 +324,7 @@ curl -X POST http://127.0.0.1:8080/send/v1/screen/open \
 | API | command | 필드 |
 |---|---|---|
 | `POST /send/v1/account` | `SETACCTINFO` | `acct_no`, `acct_pwd` |
+| `POST /send/v1/gmsh/account` | `SETACCTINFO` | `acct_no`, `acct_pwd` |
 | `POST /send/v1/account/clear` | `CLEARACCTINFO` | `acct_no` |
 | `POST /send/v1/screen/open` | `OPENSCREEN` | `acct_no`, `acct_pwd`, `scr_no`, `jcode` |
 
@@ -323,6 +373,7 @@ src/main/java/com/example/gpapi/
 
 - API는 루프백 주소에만 노출됩니다.
 - GUI와 로그에는 비밀번호가 마스킹되어 표시됩니다.
-- GUI와 로그의 계좌번호는 마지막 숫자 4자리만 `****`로 마스킹됩니다.
+- GUI와 로그의 계좌번호는 오른쪽에서 4·5·6번째 숫자만 `***`로 마스킹됩니다.
+  예: `00911143462` → `00911***462`
 - 저장소에 실제 계좌번호나 비밀번호를 커밋하지 마세요.
 - 운영 배포 전 Windows 실행 파일의 코드 서명을 권장합니다.
