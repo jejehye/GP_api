@@ -340,6 +340,26 @@ curl -X POST http://127.0.0.1:8080/send/v1/screen/open \
 
 `acct_pwd`는 상대 프로그램의 `SimpleEncryptA(value, true)` 규격으로 암호화한 값입니다. 평문 비밀번호는 GMSH JSON에 포함하지 않습니다.
 
+### 비밀번호 암호화 규격 비교
+
+GP와 GMSH는 서로 다른 암호화 규격을 사용합니다.
+
+| 구분 | 전송 필드 | 함수 | 마스크 | 특징 |
+|---|---|---|---|---|
+| GP | `acct_pw` | `encryptGpPassword(value)` | 고정 `'K'` | 각 문자를 16진수 두 자리로 변환하고 각 자리를 `'K'`와 XOR |
+| GMSH | `acct_pwd` | `simpleEncryptA(value, true)` | `'K'`~`'Y'` 범위의 랜덤 문자 | 역방향 배치 규칙을 사용하고 결과 마지막에 마스크 문자를 포함 |
+
+GP 암호화 예시:
+
+```text
+평문: 0000
+암호문: x{x{x{x{
+```
+
+GMSH 암호화는 랜덤 마스크를 사용하므로 같은 평문을 입력해도 호출할 때마다
+암호문이 달라질 수 있습니다. API 요청의 `pw`는 평문으로 받지만 GP와 GMSH에
+전송하는 JSON에는 각 대상 규격으로 암호화한 값만 포함합니다.
+
 ## 프로젝트 구조
 
 ```text
