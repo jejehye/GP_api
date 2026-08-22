@@ -256,6 +256,10 @@ curl -X POST http://127.0.0.1:8080/send/v1/screen/open \
 | `101` | GP → Agent | 계좌정보 요청 또는 연결 응답 |
 | `102` | Agent → GP | 계좌 JSON 전송 |
 
+`dwData=102`의 `acct_pw`는 각 문자를 16진수 두 자리로 변환한 뒤 각 자리를
+고정 마스크 `'K'`와 XOR하는 GP 전용 `SimpleEncryptA` 규격으로 암호화합니다.
+평문 비밀번호는 GP JSON에 포함하지 않습니다.
+
 ### GMSH
 
 대상 창:

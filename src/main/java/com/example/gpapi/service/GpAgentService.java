@@ -192,6 +192,20 @@ public class GpAgentService {
         return "*".repeat(pw.length()) + " (" + pw.length() + "자리)";
     }
 
+    /** GP acct_pw 전용 고정 마스크 암호화. */
+    static String encryptGpPassword(String value) {
+        if (value == null) return "";
+
+        char mask = 'K';
+        StringBuilder encrypted = new StringBuilder(value.length() * 2);
+        for (int i = 0; i < value.length(); i++) {
+            String hex = String.format("%02x", (int) value.charAt(i));
+            encrypted.append((char) (hex.charAt(0) ^ mask));
+            encrypted.append((char) (hex.charAt(1) ^ mask));
+        }
+        return encrypted.toString();
+    }
+
     private void createHiddenWindow() {
         String className = "JavaHiddenWnd";
 
@@ -349,13 +363,14 @@ public class GpAgentService {
 
     /** dwData=102 — 계좌 JSON 송신. 성공/실패를 UI 로그로 발행. */
     private void sendAccountJson(String account, String password) {
+        String encryptedPassword = encryptGpPassword(password);
         String json =
                 "{"
                         + "\"From\":\"1H\","
                         + "\"type\":\"AC\","
                         + "\"Data\":{"
                         + "\"acct_no\":\"" + account + "\","
-                        + "\"acct_pw\":\"" + password + "\""
+                        + "\"acct_pw\":\"" + encryptedPassword + "\""
                         + "},"
                         + "\"Etc\":\"\""
                         + "}";
