@@ -403,9 +403,9 @@ public class MockGp {
 
                 Map<String, String> parsed = parseFlat(json);
                 String acct = parsed.getOrDefault("acct_no", "(없음)");
-                // 실 GoldNet 포맷: 비밀번호 키는 'acct_pw' (d 없음)
-                String pwRaw = parsed.getOrDefault("acct_pw",
-                        parsed.getOrDefault("acct_pwd", "")); // 구버전 호환
+                // 실 GoldNet 포맷: 비밀번호 키는 'acct_pwd'
+                String pwRaw = parsed.getOrDefault("acct_pwd",
+                        parsed.getOrDefault("acct_pw", "")); // 구버전 호환
                 String pwMasked = pwRaw.isEmpty() ? "(빈값)"
                         : "*".repeat(pwRaw.length()) + " (" + pwRaw.length() + "자리)";
 
