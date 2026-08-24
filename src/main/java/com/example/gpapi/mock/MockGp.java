@@ -79,6 +79,7 @@ public class MockGp {
     private static final Color OK_FG      = new Color(0x117A3D);
 
     private static HWND mockHwnd;
+    private static HWND gmshMockHwnd;
     /** GpApi 쪽 hidden window HWND — dwData=100 수신 시 등록됨 */
     private static volatile HWND gpApiHwnd;
 
@@ -305,14 +306,24 @@ public class MockGp {
     }
 
     private static void createMockWindow() {
-        String className = "WGToSH";
-
         windowProcRef = new WindowProc() {
             @Override
             public LRESULT callback(HWND hwnd, int uMsg, WPARAM wParam, LPARAM lParam) {
                 return windowProc(hwnd, uMsg, wParam, lParam);
             }
         };
+
+        mockHwnd = createMessageWindow("WGToSH", "WndBroker_GP");
+        gmshMockHwnd = createMessageWindow("GmshMainApp-CLASS", "MockGmsh");
+
+        long gpPeer = mockHwnd == null ? 0 : Pointer.nativeValue(mockHwnd.getPointer());
+        long gmshPeer = gmshMockHwnd == null ? 0 : Pointer.nativeValue(gmshMockHwnd.getPointer());
+        log("Mock GP 윈도우 생성 완료: peer=0x" + Long.toHexString(gpPeer));
+        log("Mock GMSH 윈도우 생성 완료: class=GmshMainApp-CLASS, peer=0x"
+                + Long.toHexString(gmshPeer));
+    }
+
+    private static HWND createMessageWindow(String className, String title) {
 
         WNDCLASSEX wc = new WNDCLASSEX();
         wc.cbSize = wc.size();
@@ -321,23 +332,24 @@ public class MockGp {
 
         ATOM atom = User32.INSTANCE.RegisterClassEx(wc);
         if (atom == null || atom.intValue() == 0) {
-            log("RegisterClassEx 실패");
-            return;
+            log("RegisterClassEx 실패: class=" + className + ", GetLastError=" + Native.getLastError());
+            return null;
         }
 
-        mockHwnd = User32.INSTANCE.CreateWindowEx(
-                0, className, "WndBroker_GP", 0,
+        HWND hwnd = User32.INSTANCE.CreateWindowEx(
+                0, className, title, 0,
                 0, 0, 0, 0, null, null, null, null
         );
-
-        long peer = mockHwnd == null ? 0 : Pointer.nativeValue(mockHwnd.getPointer());
-        log("Mock GP 윈도우 생성 완료: " + mockHwnd + " (peer=0x" + Long.toHexString(peer) + ")");
+        if (hwnd == null) {
+            log("CreateWindowEx 실패: class=" + className + ", GetLastError=" + Native.getLastError());
+            return null;
+        }
 
         // UIPI 우회
         try {
             boolean allowed = User32Ex.INSTANCE.ChangeWindowMessageFilterEx(
-                    mockHwnd, WM_COPYDATA, MSGFLT_ALLOW, Pointer.NULL);
-            log("UIPI 메시지 필터 허용 (WM_COPYDATA): " + (allowed ? "OK" : "실패"));
+                    hwnd, WM_COPYDATA, MSGFLT_ALLOW, Pointer.NULL);
+            log("UIPI 메시지 필터 허용: class=" + className + " → " + (allowed ? "OK" : "실패"));
         } catch (Throwable t) {
             try {
                 boolean allowed = User32Ex.INSTANCE.ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
@@ -346,6 +358,7 @@ public class MockGp {
                 log("UIPI 필터 호출 실패 (무시): " + t2.getMessage());
             }
         }
+        return hwnd;
     }
 
     private static final int MSGFLT_ALLOW = 1;
@@ -378,6 +391,7 @@ public class MockGp {
                     agentPeer = Pointer.nativeValue(cds.lpData.getPointer(0));
                 } else {
                     log("  └ [100] 예상치 못한 cbData=" + cds.cbData + " — 4 또는 8 byte 기대");
+                    log("▶ WM_COPYDATA response: dwData=100 → LRESULT=0");
                     return new LRESULT(0);
                 }
                 gpApiHwnd = new HWND(new Pointer(agentPeer));
@@ -412,10 +426,21 @@ public class MockGp {
                 log("  ✓ [102] 처리 결과: 계좌=" + acct + ", 비밀번호=" + pwMasked);
                 updateSummary(acct, pwMasked, len, receiveCount);
 
+            } else if (dwData == 91005) {
+                int len = cds.cbData;
+                byte[] data = cds.lpData.getByteArray(0, len);
+                String json = new String(data, StandardCharsets.UTF_8);
+                receiveCount++;
+
+                log("  └ [91005/GMSH] JSON 수신 (cbData=" + len + "):");
+                log("        " + json);
+                log("  ✓ [91005/GMSH] 데이터 수신 완료");
+
             } else {
                 log("  └ 알 수 없는 dwData=" + dwData);
             }
 
+            log("▶ WM_COPYDATA response: dwData=" + dwData + " → LRESULT=1");
             return new LRESULT(1);
         }
         return User32.INSTANCE.DefWindowProc(hwnd, uMsg, wParam, lParam);

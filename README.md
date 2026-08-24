@@ -87,6 +87,16 @@ macOS와 Linux에서도 GUI와 API 서버는 실행되지만 Win32 통신은 비
 3. Mock GP에 `Java 에이전트 HWND 등록 완료` 로그가 표시되는지 확인합니다.
 4. API를 호출하고 Mock GP의 수신 로그를 확인합니다.
 
+Mock은 GP용 `WGToSH / WndBroker_GP` 창과 GMSH용 `GmshMainApp-CLASS` 창을
+동시에 생성합니다. 화면 로그에서 다음 내용을 확인할 수 있습니다.
+
+- GP `dwData=100`, `102` 수신 데이터와 반환 `LRESULT`
+- GP로 보낸 `dwData=101`의 응답 `LRESULT`
+- GMSH `dwData=91005`, `cbData`, JSON 데이터와 반환 `LRESULT`
+
+실제 GP/GMSH 프로그램과 Mock을 동시에 실행하면 동일한 클래스명의 창이 여러 개
+검색될 수 있으므로 Mock 테스트 중에는 실제 프로그램을 종료해야 합니다.
+
 ## API
 
 모든 API는 `POST`와 `Content-Type: application/json`을 사용합니다.
