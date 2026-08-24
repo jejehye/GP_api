@@ -329,6 +329,31 @@ curl -X POST http://127.0.0.1:8080/send/v1/screen/open \
 - 문자열 인코딩: UTF-8
 - `cbData`: NULL 종료 문자를 제외한 JSON byte 길이
 
+GMSH 통신 흐름:
+
+```text
+1. FindWindow("GmshMainApp-CLASS", null)로 대상 HWND 검색
+2. command별 JSON을 UTF-8 byte 배열로 생성
+3. WM_COPYDATA 전송
+   - dwData = 91005
+   - wParam = 0
+   - lpData = JSON 데이터 포인터
+   - cbData = JSON UTF-8 byte 크기
+4. 전송 호출 종료
+```
+
+GMSH는 GP의 `dwData=101`과 같은 별도 응답 메시지를 보내지 않습니다.
+수신 프로그램이 `LRESULT`를 명시적으로 반환하지 않으면 `SendMessage` 결과가 `0`일
+수 있으므로, GMSH 전송에서는 `LRESULT=0`을 실패로 판정하지 않고 진단 로그에만
+기록합니다. 대상 창을 찾지 못한 경우에는 전송 실패로 처리합니다.
+
+GP와 GMSH 흐름 비교:
+
+| 구분 | 흐름 | 별도 응답 |
+|---|---|---|
+| GP | `100(HWND 등록) → 101(요청/ACK) → 102(계좌 JSON)` | 있음 (`101`) |
+| GMSH | `91005(command JSON) 전송` | 없음 |
+
 지원 command:
 
 | API | command | 필드 |

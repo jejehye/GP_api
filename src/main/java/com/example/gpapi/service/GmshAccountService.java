@@ -88,13 +88,13 @@ public class GmshAccountService {
             throw new IllegalStateException("GMSH 요청 JSON 생성 실패", e);
         }
 
-        sendCopyData(hwnd, json, step);
+        sendCopyData(hwnd, json);
         eventBus.publishStep(StepResult.success(
                 step + " 성공",
                 "계좌=" + MaskingUtils.maskAccount(accountNo)));
     }
 
-    private void sendCopyData(HWND targetHwnd, String json, String step) {
+    private void sendCopyData(HWND targetHwnd, String json) {
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
         Memory memory = new Memory(bytes.length);
         memory.write(0, bytes, 0, bytes.length);
@@ -119,13 +119,8 @@ public class GmshAccountService {
                 + ", cbData=" + cds.cbData
                 + ", LRESULT=" + returnValue
                 + ", GetLastError=" + error);
-
-        if (returnValue == 0) {
-            eventBus.publishStep(StepResult.fail(
-                    step + " 실패",
-                    "LRESULT=0, GetLastError=" + error));
-            throw new IllegalStateException("GMSH 계좌 송신 실패: LRESULT=0, GetLastError=" + error);
-        }
+        // GMSH 프로토콜에는 GP의 dwData=101 같은 별도 응답 단계가 없다.
+        // 수신 측이 명시적인 LRESULT를 반환하지 않아 0이 와도 전송 실패로 판단하지 않는다.
     }
 
     static String simpleEncryptA(String value, boolean randomKey) {

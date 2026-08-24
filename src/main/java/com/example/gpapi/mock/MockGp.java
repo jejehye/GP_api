@@ -435,6 +435,8 @@ public class MockGp {
                 log("  └ [91005/GMSH] JSON 수신 (cbData=" + len + "):");
                 log("        " + json);
                 log("  ✓ [91005/GMSH] 데이터 수신 완료");
+                log("▶ WM_COPYDATA return: dwData=91005 → LRESULT=0 (별도 응답 없음)");
+                return new LRESULT(0);
 
             } else {
                 log("  └ 알 수 없는 dwData=" + dwData);
