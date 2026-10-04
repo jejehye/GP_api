@@ -56,6 +56,7 @@ public class GpAgentService {
 
     private volatile String currentAccount;
     private volatile String currentPassword;
+    private volatile String currentBankPassword;
 
     /** "골드넷 연결 성공" 이벤트 중복 방지 — 같은 핸들로 이미 연결 알림을 보냈는지 추적 */
     private volatile long lastConnectedPeer = 0L;
@@ -150,15 +151,17 @@ public class GpAgentService {
     }
 
     /** API 컨트롤러 진입점 */
-    public void sendAccount(String account, String password) {
+    public void sendAccount(String account, String password, String bankPassword) {
         if (!windows) {
             this.currentAccount = account;
             this.currentPassword = password;
+            this.currentBankPassword = bankPassword;
             return;
         }
 
         this.currentAccount = account;
         this.currentPassword = password;
+        this.currentBankPassword = bankPassword;
 
         if (gpHwnd == null || !User32.INSTANCE.IsWindow(gpHwnd)) {
             HWND found = findGpWindow();
@@ -184,7 +187,7 @@ public class GpAgentService {
             throw new RuntimeException("HWND 등록 실패: " + e.getMessage(), e);
         }
 
-        sendAccountJson(account, password);
+        sendAccountJson(account, password, bankPassword);
     }
 
     private static String mask(String pw) {
@@ -192,7 +195,7 @@ public class GpAgentService {
         return "*".repeat(pw.length()) + " (" + pw.length() + "자리)";
     }
 
-    /** GP acct_pwd 전용 고정 마스크 암호화. */
+    /** GP acct_pwd/bank_pw 전용 고정 마스크 암호화. */
     static String encryptGpPassword(String value) {
         if (value == null) return "";
 
@@ -362,15 +365,17 @@ public class GpAgentService {
     }
 
     /** dwData=102 — 계좌 JSON 송신. 성공/실패를 UI 로그로 발행. */
-    private void sendAccountJson(String account, String password) {
+    private void sendAccountJson(String account, String password, String bankPassword) {
         String encryptedPassword = encryptGpPassword(password);
+        String encryptedBankPassword = encryptGpPassword(bankPassword);
         String json =
                 "{"
                         + "\"From\":\"1H\","
                         + "\"type\":\"AC\","
                         + "\"Data\":{"
                         + "\"acct_no\":\"" + account + "\","
-                        + "\"acct_pwd\":\"" + encryptedPassword + "\""
+                        + "\"acct_pwd\":\"" + encryptedPassword + "\","
+                        + "\"bank_pw\":\"" + encryptedBankPassword + "\""
                         + "},"
                         + "\"Etc\":\"\""
                         + "}";

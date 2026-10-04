@@ -422,9 +422,13 @@ public class MockGp {
                         parsed.getOrDefault("acct_pw", "")); // 구버전 호환
                 String pwMasked = pwRaw.isEmpty() ? "(빈값)"
                         : "*".repeat(pwRaw.length()) + " (" + pwRaw.length() + "자리)";
+                String bankPwRaw = parsed.getOrDefault("bank_pw", "");
+                String bankPwMasked = bankPwRaw.isEmpty() ? "(빈값)"
+                        : "*".repeat(bankPwRaw.length()) + " (" + bankPwRaw.length() + "자리)";
 
-                log("  ✓ [102] 처리 결과: 계좌=" + acct + ", 비밀번호=" + pwMasked);
-                updateSummary(acct, pwMasked, len, receiveCount);
+                log("  ✓ [102] 처리 결과: 계좌=" + acct + ", 비밀번호=" + pwMasked
+                        + ", 은행비밀번호=" + bankPwMasked);
+                updateSummary(acct, pwMasked, bankPwMasked, len, receiveCount);
 
             } else if (dwData == 91005) {
                 int len = cds.cbData;
@@ -493,14 +497,16 @@ public class MockGp {
         return out;
     }
 
-    private static void updateSummary(String account, String pwMasked, int bytes, int total) {
+    private static void updateSummary(String account, String pwMasked, String bankPwMasked,
+                                      int bytes, int total) {
         if (lastReceivedLabel == null) return;
         String time = LocalTime.now().format(TIME);
         String html = "<html><div style=\"font-family:'Malgun Gothic', 'Segoe UI', sans-serif;\">"
                 + "<div style='color:#117A3D; font-weight:bold;'>● 처리 완료</div>"
                 + "<div style='margin-top:4px; color:#0F172A;'>"
                 + "<b>계좌</b> &nbsp;" + escape(account) + "<br>"
-                + "<b>비밀번호</b> &nbsp;" + escape(pwMasked)
+                + "<b>비밀번호</b> &nbsp;" + escape(pwMasked) + "<br>"
+                + "<b>은행비밀번호</b> &nbsp;" + escape(bankPwMasked)
                 + "</div>"
                 + "<div style='margin-top:4px; color:#64748B; font-size:11px;'>"
                 + time + " · " + bytes + " bytes · 누적 " + total + "건"

@@ -50,7 +50,10 @@ public class AccountController {
         String gmshError = null;
 
         try {
-            gpAgentService.sendAccount(request.getAccount(), request.getPw());
+            gpAgentService.sendAccount(
+                    request.getAccount(),
+                    request.getPw(),
+                    request.getBankPw());
             gpSuccess = true;
         } catch (Exception e) {
             gpError = messageOf(e);
