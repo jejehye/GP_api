@@ -85,7 +85,7 @@ public class MainFrame {
         } catch (Exception ignore) {
         }
 
-        Font mono = monoFont(15f).deriveFont(Font.BOLD);
+        Font mono = monoFont(13f).deriveFont(Font.BOLD);
 
         frame = new JFrame("[S] 신한투자증권");
         frame.setIconImage(createBadgeIcon("S", new Color(0x2563EB))); // 파랑 = Server/Send (CSendToGPWnd)
