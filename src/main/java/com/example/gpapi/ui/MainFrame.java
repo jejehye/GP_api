@@ -96,7 +96,7 @@ public class MainFrame {
 
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(BG);
-        root.setBorder(new EmptyBorder(4, 8, 4, 8));
+        root.setBorder(new EmptyBorder(4, 8, 0, 8));
 
         root.add(buildCenter(mono), BorderLayout.CENTER);
         root.add(buildStartupToggle(), BorderLayout.SOUTH);
@@ -124,6 +124,7 @@ public class MainFrame {
         startupCheck.setOpaque(false);
         startupCheck.setFocusPainted(false);
         startupCheck.setFont(uiFont(10.5f, Font.PLAIN));
+        startupCheck.setMargin(new Insets(0, 0, 0, 0));
 
         if (startupManager.isSupported()) {
             startupCheck.setForeground(TEXT);
