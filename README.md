@@ -316,7 +316,8 @@ curl -X POST http://127.0.0.1:8080/send/v1/screen/open \
 | `101` | GP → Agent | 계좌정보 요청 또는 연결 응답 |
 | `102` | Agent → GP | 계좌 JSON 전송 |
 
-`dwData=102`의 `acct_pwd`와 `bank_pw`는 각 문자를 16진수 두 자리로 변환한 뒤 각 자리를
+API 요청에서는 은행 비밀번호를 `bank_pw`로 받습니다. GP로 보내는 `dwData=102` JSON에서는
+이 값을 `bnk_pwd`로 변환하여 전송합니다. `acct_pwd`와 `bnk_pwd`는 각 문자를 16진수 두 자리로 변환한 뒤 각 자리를
 고정 마스크 `'K'`와 XOR하는 GP 전용 `SimpleEncryptA` 규격으로 암호화합니다.
 두 필드 모두 동일한 암호화 함수를 사용하며 평문 비밀번호는 GP JSON에 포함하지 않습니다.
 
@@ -382,7 +383,7 @@ GP와 GMSH는 서로 다른 암호화 규격을 사용합니다.
 
 | 구분 | 전송 필드 | 함수 | 마스크 | 특징 |
 |---|---|---|---|---|
-| GP | `acct_pwd`, `bank_pw` | `encryptGpPassword(value)` | 고정 `'K'` | 각 문자를 16진수 두 자리로 변환하고 각 자리를 `'K'`와 XOR |
+| GP | `acct_pwd`, `bnk_pwd` | `encryptGpPassword(value)` | 고정 `'K'` | 각 문자를 16진수 두 자리로 변환하고 각 자리를 `'K'`와 XOR |
 | GMSH | `acct_pwd` | `simpleEncryptA(value, true)` | `'K'`~`'Y'` 범위의 랜덤 문자 | 역방향 배치 규칙을 사용하고 결과 마지막에 마스크 문자를 포함 |
 
 GP 암호화 예시:
@@ -413,7 +414,7 @@ GP 전송 값은 고정 마스크 `'K'`를 사용하므로 항상 같습니다.
 ```json
 {
   "acct_pwd": "x{x{x{x{",
-  "bank_pw": "x{x{x{x{"
+  "bnk_pwd": "x{x{x{x{"
 }
 ```
 
