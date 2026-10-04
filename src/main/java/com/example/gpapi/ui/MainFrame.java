@@ -14,8 +14,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -23,9 +21,6 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -34,7 +29,6 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.RenderingHints;
-import java.time.format.DateTimeFormatter;
 
 @Component
 public class MainFrame {
@@ -46,13 +40,6 @@ public class MainFrame {
     private static final Color MUTED       = new Color(0x64748B); // slate-500
     private static final Color BORDER      = new Color(0xDBE5F2); // blue-100
     private static final Color ACCENT      = new Color(0x2563EB); // blue-600
-    private static final Color ACCENT_SOFT = new Color(0xDBEAFE); // blue-100
-    private static final Color SUCCESS_BG  = new Color(0xE7F8EE);
-    private static final Color SUCCESS_FG  = new Color(0x117A3D);
-    private static final Color FAIL_BG     = new Color(0xFDECEC);
-    private static final Color FAIL_FG     = new Color(0xB42318);
-    private static final Color ROW_ALT     = new Color(0xF8FAFD);
-    private static final Color HEADER_BG   = new Color(0xF1F5FB);
 
     private final LogEventBus eventBus;
     private final com.example.gpapi.inspector.WindowInspector inspector =
@@ -61,12 +48,9 @@ public class MainFrame {
             new com.example.gpapi.startup.StartupManager();
 
     private JFrame frame;
-    private DefaultTableModel requestTableModel;
-    private JTable requestTable;
+    private JLabel currentAccountLabel;
     private JButton inspectorBtn;
     private JCheckBox startupCheck;
-
-    private final DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public MainFrame(LogEventBus eventBus) {
         this.eventBus = eventBus;
@@ -79,7 +63,7 @@ public class MainFrame {
             return;
         }
 
-        // UI를 동기 빌드 — 이 메서드가 리턴될 때 frame/requestTableModel 모두 준비됨.
+        // UI를 동기 빌드 — 이 메서드가 리턴될 때 현재 계좌 표시 영역까지 준비됨.
         try {
             if (SwingUtilities.isEventDispatchThread()) {
                 buildUi();
@@ -103,25 +87,17 @@ public class MainFrame {
             UIManager.put("defaultFont", new javax.swing.plaf.FontUIResource(defaultFont));
             UIManager.put("Component.focusWidth", 0);
             UIManager.put("Component.innerFocusWidth", 0);
-            UIManager.put("ScrollBar.thumbArc", 999);
-            UIManager.put("ScrollBar.trackArc", 999);
-            UIManager.put("ScrollBar.width", 10);
-            UIManager.put("Table.showHorizontalLines", false);
-            UIManager.put("Table.showVerticalLines", false);
-            UIManager.put("Table.intercellSpacing", new java.awt.Dimension(0, 0));
-            UIManager.put("TableHeader.separatorColor", BORDER);
-            UIManager.put("TableHeader.bottomSeparatorColor", BORDER);
         } catch (Exception ignore) {
         }
 
         Font baseFont = uiFont(13f, Font.PLAIN);
-        Font mono = monoFont(13f);
+        Font mono = monoFont(22f).deriveFont(Font.BOLD);
 
         frame = new JFrame("[S] 신한투자증권");
         frame.setIconImage(createBadgeIcon("S", new Color(0x2563EB))); // 파랑 = Server/Send (CSendToGPWnd)
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(300, 350);
-        frame.setMinimumSize(new java.awt.Dimension(300, 350));
+        frame.setSize(380, 250);
+        frame.setMinimumSize(new java.awt.Dimension(340, 230));
         frame.setLocationRelativeTo(null);
 
         JPanel root = new JPanel(new BorderLayout());
@@ -136,105 +112,19 @@ public class MainFrame {
     }
 
     private JComponent buildCenter(Font baseFont, Font mono) {
-        return card("최근 API 요청", buildRequestTable(baseFont), buildStatusIndicator());
-    }
+        JPanel accountPanel = new JPanel(new BorderLayout());
+        accountPanel.setOpaque(false);
+        accountPanel.setBorder(new EmptyBorder(26, 16, 26, 16));
 
-    /** 초록 점 + "실행 중" — 카드 헤더 우측에 배치 */
-    private JComponent buildStatusIndicator() {
-        JPanel statusWrap = new JPanel();
-        statusWrap.setOpaque(false);
-        statusWrap.setLayout(new javax.swing.BoxLayout(statusWrap, javax.swing.BoxLayout.X_AXIS));
-        statusWrap.add(new Dot(new Color(0x16A34A)));
-        statusWrap.add(javax.swing.Box.createHorizontalStrut(6));
-        JLabel runState = new JLabel("실행 중");
-        runState.setForeground(SUCCESS_FG);
-        runState.setFont(uiFont(12.5f, Font.BOLD));
-        statusWrap.add(runState);
-        return statusWrap;
-    }
+        currentAccountLabel = new JLabel("-", SwingConstants.CENTER);
+        currentAccountLabel.setForeground(TEXT);
+        currentAccountLabel.setFont(mono);
+        accountPanel.add(currentAccountLabel, BorderLayout.CENTER);
 
-    private JComponent buildRequestTable(Font baseFont) {
-        requestTableModel = new DefaultTableModel(
-                new Object[]{"시간", "계좌", "비밀번호", "결과"}, 0) {
-            @Override public boolean isCellEditable(int row, int column) { return false; }
-        };
-        requestTable = new JTable(requestTableModel) {
-            @Override
-            public java.awt.Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int col) {
-                java.awt.Component c = super.prepareRenderer(renderer, row, col);
-                if (!isRowSelected(row)) {
-                    c.setBackground(row % 2 == 0 ? SURFACE : ROW_ALT);
-                }
-                return c;
-            }
-        };
-        requestTable.setFillsViewportHeight(true);
-        requestTable.setRowHeight(30);
-        requestTable.setFont(baseFont);
-        requestTable.setForeground(TEXT);
-        requestTable.setBackground(SURFACE);
-        requestTable.setShowGrid(false);
-        requestTable.setSelectionBackground(ACCENT_SOFT);
-        requestTable.setSelectionForeground(TEXT);
-        requestTable.setIntercellSpacing(new java.awt.Dimension(0, 0));
-
-        JTableHeader header = requestTable.getTableHeader();
-        header.setBackground(HEADER_BG);
-        header.setForeground(MUTED);
-        header.setFont(uiFont(12f, Font.BOLD));
-        header.setReorderingAllowed(false);
-        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER));
-        header.setPreferredSize(new java.awt.Dimension(header.getPreferredSize().width, 32));
-
-        DefaultTableCellRenderer pad = new DefaultTableCellRenderer() {
-            @Override
-            public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                                  boolean hasFocus, int row, int column) {
-                java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                ((DefaultTableCellRenderer) c).setBorder(new EmptyBorder(0, 14, 0, 14));
-                return c;
-            }
-        };
-        DefaultTableCellRenderer mutedRenderer = new DefaultTableCellRenderer() {
-            @Override
-            public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                                  boolean hasFocus, int row, int column) {
-                java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                ((DefaultTableCellRenderer) c).setBorder(new EmptyBorder(0, 14, 0, 14));
-                if (!isSelected) c.setForeground(MUTED);
-                return c;
-            }
-        };
-
-        requestTable.getColumnModel().getColumn(0).setCellRenderer(mutedRenderer);   // 시간
-        requestTable.getColumnModel().getColumn(1).setCellRenderer(pad);             // 계좌
-        requestTable.getColumnModel().getColumn(2).setCellRenderer(pad);             // 비밀번호
-        requestTable.getColumnModel().getColumn(3).setCellRenderer(new StatusChipRenderer()); // 결과
-
-        requestTable.getColumnModel().getColumn(0).setPreferredWidth(80);
-        requestTable.getColumnModel().getColumn(1).setPreferredWidth(200);
-        requestTable.getColumnModel().getColumn(2).setPreferredWidth(110);
-        requestTable.getColumnModel().getColumn(3).setPreferredWidth(70);
-
-        JScrollPane scroll = new JScrollPane(requestTable);
-        scroll.setBorder(null);
-        scroll.getViewport().setBackground(SURFACE);
-        scroll.setOpaque(false);
-        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
-        return scroll;
+        return card("현재 계좌", accountPanel);
     }
 
     private JComponent buildFooter(Font baseFont) {
-        JButton clearBtn = new JButton("Clear");
-        clearBtn.setFocusPainted(false);
-        clearBtn.setFont(uiFont(12.5f, Font.PLAIN));
-        clearBtn.putClientProperty("JButton.buttonType", "roundRect");
-        clearBtn.addActionListener(e -> {
-            if (requestTableModel != null) requestTableModel.setRowCount(0);
-        });
-
         inspectorBtn = new JButton("Window Inspector 열기");
         inspectorBtn.setFocusPainted(false);
         inspectorBtn.setFont(uiFont(12.5f, Font.BOLD));
@@ -254,8 +144,6 @@ public class MainFrame {
         JPanel right = new JPanel();
         right.setOpaque(false);
         right.setLayout(new javax.swing.BoxLayout(right, javax.swing.BoxLayout.X_AXIS));
-        right.add(clearBtn);
-        right.add(javax.swing.Box.createHorizontalStrut(8));
         right.add(inspectorBtn);
 
         JPanel buttonRow = new JPanel(new BorderLayout());
@@ -350,15 +238,9 @@ public class MainFrame {
 
     private void appendRequest(RequestLog log) {
         SwingUtilities.invokeLater(() -> {
-            if (requestTableModel == null) return;
-            // 항상 최근 1건만 표시 — 기존 행을 비우고 새 행만 남긴다.
-            requestTableModel.setRowCount(0);
-            requestTableModel.addRow(new Object[]{
-                    log.timestamp().format(timeFmt),
-                    log.maskedAccount(),
-                    log.maskedPw(),
-                    log.success() ? "성공" : "실패"
-            });
+            if (currentAccountLabel != null) {
+                currentAccountLabel.setText(log.maskedAccount());
+            }
         });
     }
 
@@ -437,62 +319,4 @@ public class MainFrame {
         }
     }
 
-    /** 작은 상태 점 */
-    private static class Dot extends JComponent {
-        private final Color color;
-        Dot(Color color) {
-            this.color = color;
-            setPreferredSize(new java.awt.Dimension(10, 10));
-            setMinimumSize(getPreferredSize());
-            setMaximumSize(getPreferredSize());
-        }
-        @Override protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(color);
-            g2.fillOval(0, 0, getWidth(), getHeight());
-            g2.dispose();
-        }
-    }
-
-    /** 결과 컬럼 — 성공/실패를 칩으로 렌더링 */
-    private static class StatusChipRenderer extends DefaultTableCellRenderer {
-        private boolean success;
-        StatusChipRenderer() {
-            setHorizontalAlignment(SwingConstants.CENTER);
-            setOpaque(false);
-        }
-        @Override
-        public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                              boolean hasFocus, int row, int column) {
-            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            success = "성공".equals(value);
-            setText((String) value);
-            setFont(uiFont(11.5f, Font.BOLD));
-            setBorder(new EmptyBorder(0, 14, 0, 14));
-            setForeground(success ? SUCCESS_FG : FAIL_FG);
-            return this;
-        }
-        @Override protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            // 1) 셀 전체를 행의 모드 배경색으로 먼저 채워서 다른 셀과 연속되게 보이게 한다.
-            //    (StatusChipRenderer 는 setOpaque(false) 이므로 직접 채우지 않으면 흰색이 그대로 비침)
-            g2.setColor(getBackground());
-            g2.fillRect(0, 0, getWidth(), getHeight());
-
-            // 2) 결과 chip pill (성공=초록 / 실패=빨강) 을 셀 가운데에 덧그림
-            int padX = 14, padY = 5;
-            int textW = getFontMetrics(getFont()).stringWidth(getText());
-            int chipW = Math.min(textW + padX * 2, getWidth() - 8);
-            int chipH = Math.min(getFontMetrics(getFont()).getHeight() + padY * 2, getHeight() - 6);
-            int x = (getWidth() - chipW) / 2;
-            int y = (getHeight() - chipH) / 2;
-            g2.setColor(success ? SUCCESS_BG : FAIL_BG);
-            g2.fillRoundRect(x, y, chipW, chipH, chipH, chipH);
-            g2.dispose();
-            super.paintComponent(g);
-        }
-    }
 }
