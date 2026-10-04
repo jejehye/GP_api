@@ -7,12 +7,9 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -37,20 +34,12 @@ public class MainFrame {
     private static final Color BG          = new Color(0xEEF3FB); // blue-50 tint
     private static final Color SURFACE     = Color.WHITE;
     private static final Color TEXT        = new Color(0x0F172A); // slate-900
-    private static final Color MUTED       = new Color(0x64748B); // slate-500
     private static final Color BORDER      = new Color(0xDBE5F2); // blue-100
-    private static final Color ACCENT      = new Color(0x2563EB); // blue-600
 
     private final LogEventBus eventBus;
-    private final com.example.gpapi.inspector.WindowInspector inspector =
-            new com.example.gpapi.inspector.WindowInspector();
-    private final com.example.gpapi.startup.StartupManager startupManager =
-            new com.example.gpapi.startup.StartupManager();
 
     private JFrame frame;
     private JLabel currentAccountLabel;
-    private JButton inspectorBtn;
-    private JCheckBox startupCheck;
 
     public MainFrame(LogEventBus eventBus) {
         this.eventBus = eventBus;
@@ -90,31 +79,29 @@ public class MainFrame {
         } catch (Exception ignore) {
         }
 
-        Font baseFont = uiFont(13f, Font.PLAIN);
-        Font mono = monoFont(22f).deriveFont(Font.BOLD);
+        Font mono = monoFont(15f).deriveFont(Font.BOLD);
 
         frame = new JFrame("[S] 신한투자증권");
         frame.setIconImage(createBadgeIcon("S", new Color(0x2563EB))); // 파랑 = Server/Send (CSendToGPWnd)
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(380, 250);
-        frame.setMinimumSize(new java.awt.Dimension(340, 230));
+        frame.setSize(200, 150);
+        frame.setMinimumSize(new java.awt.Dimension(200, 150));
         frame.setLocationRelativeTo(null);
 
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(BG);
-        root.setBorder(new EmptyBorder(16, 16, 16, 16));
+        root.setBorder(new EmptyBorder(8, 8, 8, 8));
 
-        root.add(buildCenter(baseFont, mono), BorderLayout.CENTER);
-        root.add(buildFooter(baseFont), BorderLayout.SOUTH);
+        root.add(buildCenter(mono), BorderLayout.CENTER);
 
         frame.setContentPane(root);
         frame.setVisible(true);
     }
 
-    private JComponent buildCenter(Font baseFont, Font mono) {
+    private JComponent buildCenter(Font mono) {
         JPanel accountPanel = new JPanel(new BorderLayout());
         accountPanel.setOpaque(false);
-        accountPanel.setBorder(new EmptyBorder(26, 16, 26, 16));
+        accountPanel.setBorder(new EmptyBorder(10, 8, 10, 8));
 
         currentAccountLabel = new JLabel("-", SwingConstants.CENTER);
         currentAccountLabel.setForeground(TEXT);
@@ -122,79 +109,6 @@ public class MainFrame {
         accountPanel.add(currentAccountLabel, BorderLayout.CENTER);
 
         return card("현재 계좌", accountPanel);
-    }
-
-    private JComponent buildFooter(Font baseFont) {
-        inspectorBtn = new JButton("Window Inspector 열기");
-        inspectorBtn.setFocusPainted(false);
-        inspectorBtn.setFont(uiFont(12.5f, Font.BOLD));
-        inspectorBtn.setBackground(ACCENT);
-        inspectorBtn.setForeground(Color.WHITE);
-        inspectorBtn.putClientProperty("JButton.buttonType", "roundRect");
-        inspectorBtn.addActionListener(e -> {
-            if (inspector.isShowing()) {
-                inspector.hide();
-                inspectorBtn.setText("Window Inspector 열기");
-            } else {
-                inspector.show();
-                inspectorBtn.setText("Window Inspector 닫기");
-            }
-        });
-
-        JPanel right = new JPanel();
-        right.setOpaque(false);
-        right.setLayout(new javax.swing.BoxLayout(right, javax.swing.BoxLayout.X_AXIS));
-        right.add(inspectorBtn);
-
-        JPanel buttonRow = new JPanel(new BorderLayout());
-        buttonRow.setOpaque(false);
-        buttonRow.add(right, BorderLayout.EAST);
-
-        JPanel bar = new JPanel(new BorderLayout());
-        bar.setOpaque(false);
-        bar.setBorder(new EmptyBorder(12, 0, 0, 0));
-        bar.add(buildStartupToggle(), BorderLayout.NORTH);
-        bar.add(buttonRow, BorderLayout.CENTER);
-        return bar;
-    }
-
-    /** 윈도우 시작 시 자동 실행 체크박스 */
-    private JComponent buildStartupToggle() {
-        startupCheck = new JCheckBox("Windows 시작 시 자동 실행");
-        startupCheck.setOpaque(false);
-        startupCheck.setFocusPainted(false);
-        startupCheck.setFont(uiFont(12f, Font.PLAIN));
-
-        if (startupManager.isSupported()) {
-            startupCheck.setForeground(TEXT);
-            startupCheck.setSelected(startupManager.isEnabled());
-            startupCheck.setToolTipText("로그온 시 자동 실행: " + startupManager.getExecutablePath());
-            startupCheck.addActionListener(e -> applyStartupSetting());
-        } else {
-            // EXE가 아닌 방식(개발 중 jar/IDE 실행)이면 등록할 경로가 없어 비활성화
-            startupCheck.setForeground(MUTED);
-            startupCheck.setSelected(false);
-            startupCheck.setEnabled(false);
-            startupCheck.setToolTipText("GpApi.exe 로 실행할 때만 설정할 수 있습니다");
-        }
-
-        JPanel row = new JPanel(new BorderLayout());
-        row.setOpaque(false);
-        row.setBorder(new EmptyBorder(0, 2, 8, 0));
-        row.add(startupCheck, BorderLayout.WEST);
-        return row;
-    }
-
-    /** 체크 상태를 레지스트리에 반영. 실패하면 체크박스를 원래대로 되돌린다. */
-    private void applyStartupSetting() {
-        boolean want = startupCheck.isSelected();
-        if (startupManager.setEnabled(want)) return;
-
-        startupCheck.setSelected(!want);
-        JOptionPane.showMessageDialog(frame,
-                "자동 실행 " + (want ? "등록" : "해제") + "에 실패했습니다.",
-                "자동 실행 설정",
-                JOptionPane.WARNING_MESSAGE);
     }
 
     private JComponent card(String title, JComponent body) {
@@ -215,7 +129,7 @@ public class MainFrame {
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new CompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),
-                new EmptyBorder(12, 16, 12, 16)));
+                new EmptyBorder(8, 10, 8, 10)));
         headerPanel.add(titleLabel, BorderLayout.WEST);
         if (headerRight != null) {
             headerPanel.add(headerRight, BorderLayout.EAST);
