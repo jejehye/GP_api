@@ -90,13 +90,13 @@ public class MainFrame {
         frame = new JFrame("[S] 신한투자증권");
         frame.setIconImage(createBadgeIcon("S", new Color(0x2563EB))); // 파랑 = Server/Send (CSendToGPWnd)
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(200, 150);
-        frame.setMinimumSize(new java.awt.Dimension(200, 150));
+        frame.setSize(200, 125);
+        frame.setMinimumSize(new java.awt.Dimension(200, 125));
         frame.setLocationRelativeTo(null);
 
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(BG);
-        root.setBorder(new EmptyBorder(8, 8, 8, 8));
+        root.setBorder(new EmptyBorder(4, 8, 4, 8));
 
         root.add(buildCenter(mono), BorderLayout.CENTER);
         root.add(buildStartupToggle(), BorderLayout.SOUTH);
@@ -108,7 +108,7 @@ public class MainFrame {
     private JComponent buildCenter(Font mono) {
         JPanel accountPanel = new JPanel(new BorderLayout());
         accountPanel.setOpaque(false);
-        accountPanel.setBorder(new EmptyBorder(10, 8, 10, 8));
+        accountPanel.setBorder(new EmptyBorder(4, 8, 4, 8));
 
         currentAccountLabel = new JLabel("-", SwingConstants.CENTER);
         currentAccountLabel.setForeground(TEXT);
@@ -139,7 +139,7 @@ public class MainFrame {
 
         JPanel row = new JPanel(new BorderLayout());
         row.setOpaque(false);
-        row.setBorder(new EmptyBorder(4, 0, 0, 0));
+        row.setBorder(new EmptyBorder(2, 0, 0, 0));
         row.add(startupCheck, BorderLayout.WEST);
         return row;
     }
@@ -173,7 +173,7 @@ public class MainFrame {
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new CompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),
-                new EmptyBorder(8, 10, 8, 10)));
+                new EmptyBorder(4, 10, 4, 10)));
         headerPanel.add(titleLabel, BorderLayout.WEST);
         if (headerRight != null) {
             headerPanel.add(headerRight, BorderLayout.EAST);
@@ -182,7 +182,7 @@ public class MainFrame {
 
         JPanel bodyWrap = new JPanel(new BorderLayout());
         bodyWrap.setOpaque(false);
-        bodyWrap.setBorder(new EmptyBorder(2, 4, 6, 4));
+        bodyWrap.setBorder(new EmptyBorder(0, 4, 2, 4));
         bodyWrap.add(body, BorderLayout.CENTER);
         card.add(bodyWrap, BorderLayout.CENTER);
 
