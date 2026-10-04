@@ -7,9 +7,11 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
 import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -34,12 +36,16 @@ public class MainFrame {
     private static final Color BG          = new Color(0xEEF3FB); // blue-50 tint
     private static final Color SURFACE     = Color.WHITE;
     private static final Color TEXT        = new Color(0x0F172A); // slate-900
+    private static final Color MUTED       = new Color(0x64748B); // slate-500
     private static final Color BORDER      = new Color(0xDBE5F2); // blue-100
 
     private final LogEventBus eventBus;
+    private final com.example.gpapi.startup.StartupManager startupManager =
+            new com.example.gpapi.startup.StartupManager();
 
     private JFrame frame;
     private JLabel currentAccountLabel;
+    private JCheckBox startupCheck;
 
     public MainFrame(LogEventBus eventBus) {
         this.eventBus = eventBus;
@@ -93,6 +99,7 @@ public class MainFrame {
         root.setBorder(new EmptyBorder(8, 8, 8, 8));
 
         root.add(buildCenter(mono), BorderLayout.CENTER);
+        root.add(buildStartupToggle(), BorderLayout.SOUTH);
 
         frame.setContentPane(root);
         frame.setVisible(true);
@@ -109,6 +116,43 @@ public class MainFrame {
         accountPanel.add(currentAccountLabel, BorderLayout.CENTER);
 
         return card("현재 계좌", accountPanel);
+    }
+
+    /** 작은 창 하단에 유지되는 Windows 자동 실행 체크박스. */
+    private JComponent buildStartupToggle() {
+        startupCheck = new JCheckBox("Windows 시작 시 자동 실행");
+        startupCheck.setOpaque(false);
+        startupCheck.setFocusPainted(false);
+        startupCheck.setFont(uiFont(10.5f, Font.PLAIN));
+
+        if (startupManager.isSupported()) {
+            startupCheck.setForeground(TEXT);
+            startupCheck.setSelected(startupManager.isEnabled());
+            startupCheck.setToolTipText("로그온 시 자동 실행: " + startupManager.getExecutablePath());
+            startupCheck.addActionListener(e -> applyStartupSetting());
+        } else {
+            startupCheck.setForeground(MUTED);
+            startupCheck.setSelected(false);
+            startupCheck.setEnabled(false);
+            startupCheck.setToolTipText("GpApi.exe 로 실행할 때만 설정할 수 있습니다");
+        }
+
+        JPanel row = new JPanel(new BorderLayout());
+        row.setOpaque(false);
+        row.setBorder(new EmptyBorder(4, 0, 0, 0));
+        row.add(startupCheck, BorderLayout.WEST);
+        return row;
+    }
+
+    private void applyStartupSetting() {
+        boolean want = startupCheck.isSelected();
+        if (startupManager.setEnabled(want)) return;
+
+        startupCheck.setSelected(!want);
+        JOptionPane.showMessageDialog(frame,
+                "자동 실행 " + (want ? "등록" : "해제") + "에 실패했습니다.",
+                "자동 실행 설정",
+                JOptionPane.WARNING_MESSAGE);
     }
 
     private JComponent card(String title, JComponent body) {
