@@ -9,7 +9,7 @@ Spring Boot, Swing, JNA를 사용하며 Windows 프로그램과는 `WM_COPYDATA`
 - GP 또는 Mock GP 자동 검색 및 HWND 등록
 - GMSH `SETACCTINFO`, `CLEARACCTINFO`, `OPENSCREEN` command 지원
 - GMSH 전송 전 계좌 비밀번호 암호화
-- 현재 시각과 마스킹된 현재 계좌번호를 보여주는 간결한 Swing GUI
+- 최근 API 요청 시각과 마스킹된 현재 계좌번호를 보여주는 간결한 Swing GUI
 - Windows 실행 파일 및 JRE 포함 portable ZIP 빌드
 
 ## 요구 환경
@@ -462,7 +462,7 @@ src/main/java/com/example/gpapi/
 ## 보안 참고사항
 
 - API는 루프백 주소에만 노출됩니다.
-- GUI에는 현재 시각과 현재 계좌번호만 표시하며 성공/실패 결과와 비밀번호는 표시하지 않습니다.
+- GUI에는 최근 API 요청 로그의 시각과 해당 계좌번호만 표시하며 성공/실패 결과와 비밀번호는 표시하지 않습니다.
 - GUI와 로그의 계좌번호는 오른쪽에서 4·5·6번째 숫자만 `***`로 마스킹됩니다.
   예: `00911143462` → `00911***462`
 - 저장소에 실제 계좌번호나 비밀번호를 커밋하지 마세요.

@@ -15,7 +15,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
@@ -29,7 +28,6 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.RenderingHints;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 @Component
@@ -48,9 +46,8 @@ public class MainFrame {
 
     private JFrame frame;
     private JLabel currentAccountLabel;
-    private JLabel currentTimeLabel;
+    private JLabel requestTimeLabel;
     private JCheckBox startupCheck;
-    private Timer clockTimer;
 
     private final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -109,7 +106,6 @@ public class MainFrame {
         root.add(buildStartupToggle(), BorderLayout.SOUTH);
 
         frame.setContentPane(root);
-        startClock();
         frame.setVisible(true);
     }
 
@@ -123,25 +119,11 @@ public class MainFrame {
         currentAccountLabel.setFont(mono);
         accountPanel.add(currentAccountLabel, BorderLayout.CENTER);
 
-        currentTimeLabel = new JLabel();
-        currentTimeLabel.setForeground(MUTED);
-        currentTimeLabel.setFont(monoFont(10.5f));
+        requestTimeLabel = new JLabel("-");
+        requestTimeLabel.setForeground(MUTED);
+        requestTimeLabel.setFont(monoFont(10.5f));
 
-        return card("현재 계좌", accountPanel, currentTimeLabel);
-    }
-
-    /** 현재 PC의 로컬 시각을 1초마다 갱신한다. */
-    private void startClock() {
-        updateCurrentTime();
-        clockTimer = new Timer(1000, e -> updateCurrentTime());
-        clockTimer.setCoalesce(true);
-        clockTimer.start();
-    }
-
-    private void updateCurrentTime() {
-        if (currentTimeLabel != null) {
-            currentTimeLabel.setText(LocalTime.now().format(timeFormat));
-        }
+        return card("현재 계좌", accountPanel, requestTimeLabel);
     }
 
     /** 작은 창 하단에 유지되는 Windows 자동 실행 체크박스. */
@@ -225,6 +207,9 @@ public class MainFrame {
         SwingUtilities.invokeLater(() -> {
             if (currentAccountLabel != null) {
                 currentAccountLabel.setText(log.maskedAccount());
+            }
+            if (requestTimeLabel != null) {
+                requestTimeLabel.setText(log.timestamp().format(timeFormat));
             }
         });
     }
