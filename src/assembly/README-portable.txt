@@ -19,10 +19,10 @@ JRE가 동봉되어 있어 시스템에 Java가 설치되지 않아도 동작합
 1) 사외/테스트망 (MockGp 사용)
    - 압축 해제 후 폴더 자체를 그대로 두고 (jre 폴더가 EXE 옆에 있어야 함)
    - MockGp.exe 더블클릭 → "Mock GP" 창 표시
-   - GpApi.exe 더블클릭 → "GP API Agent" 창 표시 + Tomcat 8080 기동
+   - GpApi.exe 더블클릭 → "GP API Agent" 창 표시 + Tomcat 13030 기동
    - Mock 우상단 배지가 "● 연결됨 (HTTP)" 으로 바뀌면 IPC 정상
    - 다른 PC/도구에서 다음 호출:
-       curl -X POST http://localhost:8080/send/v1/account ^
+       curl -X POST http://localhost:13030/send/v1/account ^
             -H "Content-Type: application/json" ^
             -d "{\"pw\":\"1234\",\"account\":\"우리은행1002458969333\"}"
    - Mock의 "최근 수신 결과" 카드에 결과 표시
@@ -60,7 +60,7 @@ tools/FlaUInspect/FlaUInspect.exe 실행
 주의사항
 --------
 - jre 폴더를 EXE에서 분리하면 실행되지 않습니다. 폴더 통째로 이동하세요.
-- 8080 포트가 사용 중이면 GpApi.exe 실행 실패 — 충돌하는 프로세스를 종료하세요.
+- 13030 포트가 사용 중이면 GpApi.exe 실행 실패 — 충돌하는 프로세스를 종료하세요.
 - 8090~8119 중 한 포트를 MockGp가 사용 (자동 선택).
 - 두 EXE 모두 같은 권한(둘 다 일반 사용자 또는 둘 다 관리자)으로 실행 권장.
 

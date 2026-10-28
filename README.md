@@ -18,7 +18,7 @@ Spring Boot, Swing, JNA를 사용하며 Windows 프로그램과는 `WM_COPYDATA`
 - JAR 실행: JRE/JDK 17 이상
 - portable ZIP 실행: 별도 Java 설치 불필요
 - 실행: Windows 64-bit 권장
-- 로컬 API 주소: `http://127.0.0.1:8080`
+- 로컬 API 주소: `http://127.0.0.1:13030`
 
 API 서버는 보안을 위해 `127.0.0.1`에만 바인딩됩니다. 같은 PC에서 실행되는 프로그램만 호출할 수 있습니다.
 
@@ -136,7 +136,7 @@ Content-Type: application/json
 Windows CMD 호출 예시:
 
 ```bat
-curl -X POST http://127.0.0.1:8080/send/v1/account ^
+curl -X POST http://127.0.0.1:13030/send/v1/account ^
   -H "Content-Type: application/json" ^
   -d "{\"account\":\"계좌번호\",\"pw\":\"계좌비밀번호\",\"bank_pw\":\"은행비밀번호\"}"
 ```
@@ -144,7 +144,7 @@ curl -X POST http://127.0.0.1:8080/send/v1/account ^
 macOS/Linux 호출 예시:
 
 ```bash
-curl -X POST http://127.0.0.1:8080/send/v1/account \
+curl -X POST http://127.0.0.1:13030/send/v1/account \
   -H 'Content-Type: application/json' \
   -d '{"account":"계좌번호","pw":"계좌비밀번호","bank_pw":"은행비밀번호"}'
 ```
@@ -199,7 +199,7 @@ API는 HTTP 500과 각 대상의 `gp`, `gmsh` 결과를 반환합니다.
 호출 예시:
 
 ```bash
-curl -X POST http://127.0.0.1:8080/send/v1/gmsh/account \
+curl -X POST http://127.0.0.1:13030/send/v1/gmsh/account \
   -H 'Content-Type: application/json' \
   -d '{"account":"계좌번호","pw":"계좌비밀번호"}'
 ```
@@ -236,7 +236,7 @@ Content-Type: application/json
 호출 예시:
 
 ```bash
-curl -X POST http://127.0.0.1:8080/send/v1/account/clear \
+curl -X POST http://127.0.0.1:13030/send/v1/account/clear \
   -H 'Content-Type: application/json' \
   -d '{"account":"계좌번호"}'
 ```
@@ -278,7 +278,7 @@ Content-Type: application/json
 호출 예시:
 
 ```bash
-curl -X POST http://127.0.0.1:8080/send/v1/screen/open \
+curl -X POST http://127.0.0.1:13030/send/v1/screen/open \
   -H 'Content-Type: application/json' \
   -d '{"account":"계좌번호","pw":"계좌비밀번호","screenNo":"화면번호","jcode":"종목코드"}'
 ```
