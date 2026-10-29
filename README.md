@@ -10,7 +10,8 @@ Spring Boot, Swing, JNA를 사용하며 Windows 프로그램과는 `WM_COPYDATA`
 - GMSH `SETACCTINFO`, `CLEARACCTINFO`, `OPENSCREEN` command 지원
 - GMSH 전송 전 계좌 비밀번호 암호화
 - 최근 API 요청 시각과 마스킹된 현재 계좌번호를 보여주는 간결한 Swing GUI
-- 모든 Origin·HTTP 메서드·요청 헤더를 허용하는 전역 CORS 설정
+- 모든 Origin·HTTP 메서드·요청 헤더와 OPTIONS 사전 요청을 허용하는 전역 CORS 설정
+- `Referrer-Policy: unsafe-url` 및 브라우저 로컬 네트워크 접근 호환 헤더 지원
 - Windows 실행 파일 및 JRE 포함 portable ZIP 빌드
 
 ## 요구 환경
@@ -23,6 +24,11 @@ Spring Boot, Swing, JNA를 사용하며 Windows 프로그램과는 `WM_COPYDATA`
 
 API 서버는 보안을 위해 `127.0.0.1`에만 바인딩됩니다. 같은 PC에서 실행되는 프로그램만 호출할 수 있습니다.
 브라우저 CORS 요청은 전체 허용하며 쿠키 자격증명(`Access-Control-Allow-Credentials`)은 허용하지 않습니다.
+OPTIONS 사전 요청은 최우선 필터에서 `200 OK`로 처리하고, 요청에
+`Access-Control-Request-Private-Network: true`가 있으면
+`Access-Control-Allow-Private-Network: true`를 반환합니다. API 응답에는 가장 완화된
+`Referrer-Policy: unsafe-url`을 적용합니다. 호출 페이지가 전송하는 Referrer Policy 자체는
+해당 웹 페이지 서버의 응답 헤더 또는 HTML `<meta name="referrer">`에서 설정해야 합니다.
 
 ## 빌드
 
