@@ -10,6 +10,7 @@ Spring Boot, Swing, JNA를 사용하며 Windows 프로그램과는 `WM_COPYDATA`
 - GMSH `SETACCTINFO`, `CLEARACCTINFO`, `OPENSCREEN` command 지원
 - GMSH 전송 전 계좌 비밀번호 암호화
 - 최근 API 요청 시각과 마스킹된 현재 계좌번호를 보여주는 간결한 Swing GUI
+- 모든 Origin·HTTP 메서드·요청 헤더를 허용하는 전역 CORS 설정
 - Windows 실행 파일 및 JRE 포함 portable ZIP 빌드
 
 ## 요구 환경
@@ -21,6 +22,7 @@ Spring Boot, Swing, JNA를 사용하며 Windows 프로그램과는 `WM_COPYDATA`
 - 로컬 API 주소: `http://127.0.0.1:13030`
 
 API 서버는 보안을 위해 `127.0.0.1`에만 바인딩됩니다. 같은 PC에서 실행되는 프로그램만 호출할 수 있습니다.
+브라우저 CORS 요청은 전체 허용하며 쿠키 자격증명(`Access-Control-Allow-Credentials`)은 허용하지 않습니다.
 
 ## 빌드
 
