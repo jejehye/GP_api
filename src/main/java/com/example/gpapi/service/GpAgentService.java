@@ -195,7 +195,7 @@ public class GpAgentService {
         return "*".repeat(pw.length()) + " (" + pw.length() + "자리)";
     }
 
-    /** GP acct_pwd/bnk_pwd 전용 고정 마스크 암호화. */
+    /** GP acct_pwd/bnk_acct_pwd 전용 고정 마스크 암호화. */
     static String encryptGpPassword(String value) {
         if (value == null) return "";
 
@@ -375,7 +375,7 @@ public class GpAgentService {
                         + "\"Data\":{"
                         + "\"acct_no\":\"" + account + "\","
                         + "\"acct_pwd\":\"" + encryptedPassword + "\","
-                        + "\"bnk_pwd\":\"" + encryptedBankPassword + "\""
+                        + "\"bnk_acct_pwd\":\"" + encryptedBankPassword + "\""
                         + "},"
                         + "\"Etc\":\"\""
                         + "}";

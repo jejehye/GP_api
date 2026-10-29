@@ -422,7 +422,7 @@ public class MockGp {
                         parsed.getOrDefault("acct_pw", "")); // 구버전 호환
                 String pwMasked = pwRaw.isEmpty() ? "(빈값)"
                         : "*".repeat(pwRaw.length()) + " (" + pwRaw.length() + "자리)";
-                String bankPwRaw = parsed.getOrDefault("bnk_pwd", "");
+                String bankPwRaw = parsed.getOrDefault("bnk_acct_pwd", "");
                 String bankPwMasked = bankPwRaw.isEmpty() ? "(빈값)"
                         : "*".repeat(bankPwRaw.length()) + " (" + bankPwRaw.length() + "자리)";
 
